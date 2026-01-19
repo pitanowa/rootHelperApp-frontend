@@ -147,6 +147,13 @@ const ui = {
         marginBottom: 14,
     } as const,
 
+        list: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: 12,
+        marginTop: 12,
+    } as const,
+
     field: {
         display: 'flex',
         gap: 10,
