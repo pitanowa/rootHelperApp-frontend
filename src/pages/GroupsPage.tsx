@@ -8,7 +8,7 @@ import type { Group } from '../types'
 // =====================
 const ui = {
   page: {
-    maxWidth: 920,
+    maxWidth: 1000,
     margin: '0 auto',
     padding: 16,
     fontFamily: 'system-ui, sans-serif',

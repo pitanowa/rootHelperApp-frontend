@@ -7,7 +7,7 @@ import type { Player } from '../types'
 // =====================
 const ui = {
   page: {
-    maxWidth: 720,
+    maxWidth: 1000,
     margin: '0 auto',
     padding: 16,
     fontFamily: 'system-ui, sans-serif',

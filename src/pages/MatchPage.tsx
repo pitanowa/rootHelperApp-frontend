@@ -83,8 +83,6 @@ const ui = {
         padding: 22,
         fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
         color: 'rgba(255,255,255,0.92)',
-        background:
-            'radial-gradient(1400px 700px at 10% 0%, rgba(220,38,38,0.12), transparent 60%), radial-gradient(1200px 700px at 90% 10%, rgba(59,130,246,0.10), transparent 55%), linear-gradient(180deg, rgba(6,6,8,1), rgba(10,6,8,1))',
     } as const,
 
     shell: {
@@ -375,24 +373,24 @@ const ui = {
 
     // nav dock
     cardWrap: {
-        position: 'relative',
         width: 'min(820px, 100%)',
+        display: 'grid',
+        gridTemplateRows: 'auto auto',
+        gap: 12,
     } as const,
 
     navDock: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 120,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        pointerEvents: 'none',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        alignItems: 'stretch',
+        gap: 620,
     } as const,
 
-    navDockSide: {
-        pointerEvents: 'auto',
-    } as const,
+    navDockSide: (side: 'left' | 'right') =>
+        ({
+            // display: 'flex',
+            justifyContent: side === 'left' ? 'flex-start' : 'flex-end',
+        }) as const,
 
     centerWrap: {
         display: 'flex',
@@ -559,10 +557,10 @@ const RACE_COLOR: Record<string, string> = {
     EAGLES: '#02309c',
     ALLIANCE: '#16a34a',
     CROWS: '#6d28d9',
-    VAGABOND: '#553c3c',
+    VAGABOND: '#ded8d8',
     LIZARDS: '#e0cc15',
     OTTERS: '#0fc2aa',
-    BADGERS: '#4d4d4d',
+    BADGERS: '#cbd5e1',
     MOLES: '#e69a7b',
     RATS: '#dc2626',
 }
@@ -1300,18 +1298,19 @@ export default function MatchPage() {
 
                                         {/* NAV DOCK */}
                                         <div style={ui.navDock}>
-                                            <div style={ui.navDockSide}>
+                                            <div style={ui.navDockSide('left')}>
                                                 <button onClick={toPrev} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
                                                     ← Prev
                                                 </button>
                                             </div>
 
-                                            <div style={ui.navDockSide}>
+                                            <div style={ui.navDockSide('right')}>
                                                 <button onClick={toNext} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
                                                     Next →
                                                 </button>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
 

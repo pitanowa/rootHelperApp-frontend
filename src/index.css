@@ -28,7 +28,7 @@ body::before {
   background-position: center;    /* wyśrodkuj */
   background-attachment: fixed;   /* opcjonalnie: "nieruchome" przy scrollu */
 
-  opacity: 0.80;
+  opacity: 0.90;
   pointer-events: none;
   z-index: -1;
 }

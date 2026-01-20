@@ -3,13 +3,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiDelete, apiGet, apiPost } from '../api'
 import type { GroupDetails, League, Player } from '../types'
+import { useAppCtx } from '../AppContext'
 
 // =====================
 // Legendary Dark UI (GroupDetails)
 // =====================
 const ui = {
   page: {
-    maxWidth: 920,
+    maxWidth: 1000,
     margin: '0 auto',
     padding: 16,
     fontFamily: 'system-ui, sans-serif',
@@ -22,7 +23,13 @@ const ui = {
     alignItems: 'center',
     gap: 12,
     marginBottom: 12,
+        borderRadius: 18,
+    padding: 16,
+
     flexWrap: 'wrap',
+        background:
+      'radial-gradient(900px 260px at 10% 0%, rgba(220,38,38,0.22), transparent 60%), radial-gradient(800px 260px at 90% 20%, rgba(59,130,246,0.16), transparent 55%), linear-gradient(180deg, rgba(14,14,18,1), rgba(10,10,12,1))',
+
   } as const,
 
   title: { margin: 0, lineHeight: 1.1, letterSpacing: 0.4 } as const,
@@ -227,6 +234,12 @@ const ui = {
 
 export default function GroupDetailsPage() {
   const { groupId } = useParams()
+  const { setSelectedGroupId } = useAppCtx()
+
+    useEffect(() => {
+    setSelectedGroupId(groupId ? Number(groupId) : null)
+  }, [groupId, setSelectedGroupId])
+
   const gid = Number(groupId)
 
   const [group, setGroup] = useState<GroupDetails | null>(null)
