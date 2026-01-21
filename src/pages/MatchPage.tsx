@@ -371,26 +371,24 @@ const ui = {
         alignItems: 'center',
     } as const,
 
-    // nav dock
     cardWrap: {
         width: 'min(820px, 100%)',
         display: 'grid',
-        gridTemplateRows: 'auto auto',
+        gridTemplateRows: '1fr auto',
         gap: 12,
     } as const,
 
     navDock: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        alignItems: 'stretch',
-        gap: 620,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
     } as const,
 
-    navDockSide: (side: 'left' | 'right') =>
-        ({
-            // display: 'flex',
-            justifyContent: side === 'left' ? 'flex-start' : 'flex-end',
-        }) as const,
+    navDockSide: {
+        background: 'linear-gradient(180deg, rgba(14,14,18,1), rgba(10,10,12,1))',
+        borderRadius: 18,
+    } as const,
 
     centerWrap: {
         display: 'flex',
@@ -557,10 +555,10 @@ const RACE_COLOR: Record<string, string> = {
     EAGLES: '#02309c',
     ALLIANCE: '#16a34a',
     CROWS: '#6d28d9',
-    VAGABOND: '#ded8d8',
+    VAGABOND: '#553c3c',
     LIZARDS: '#e0cc15',
     OTTERS: '#0fc2aa',
-    BADGERS: '#cbd5e1',
+    BADGERS: '#4d4d4d',
     MOLES: '#e69a7b',
     RATS: '#dc2626',
 }
@@ -1045,9 +1043,11 @@ export default function MatchPage() {
                                                 >
                                                     Skip
                                                 </button>
-
                                                 <button
-                                                    style={ui.btn('race', loading, hex)}
+                                                    style={{
+                                                        ...ui.btn('race', loading, hex),
+                                                        color: 'rgba(255,255,255,0.92)',
+                                                    }}
                                                     onClick={() => {
                                                         const last = setupIndex >= playersInMatchOrder.length - 1
                                                         if (last) {
@@ -1283,7 +1283,10 @@ export default function MatchPage() {
                                                         </div>
 
                                                         {!isRunning ? (
-                                                            <button onClick={() => setRunning(activePlayer.playerId)} disabled={loading || !matchStarted} style={ui.btn('race', loading || !matchStarted, activeColor)}>
+                                                            <button onClick={() => setRunning(activePlayer.playerId)} disabled={loading || !matchStarted} style={{
+                                                                ...ui.btn('race', loading || !matchStarted, activeColor),
+                                                                color: 'rgba(255,255,255,0.92)',
+                                                            }}>
                                                                 Start timer
                                                             </button>
                                                         ) : (
@@ -1298,19 +1301,18 @@ export default function MatchPage() {
 
                                         {/* NAV DOCK */}
                                         <div style={ui.navDock}>
-                                            <div style={ui.navDockSide('left')}>
+                                            <div style={ui.navDockSide}>
                                                 <button onClick={toPrev} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
                                                     ← Prev
                                                 </button>
                                             </div>
 
-                                            <div style={ui.navDockSide('right')}>
+                                            <div style={ui.navDockSide}>
                                                 <button onClick={toNext} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
                                                     Next →
                                                 </button>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
 
