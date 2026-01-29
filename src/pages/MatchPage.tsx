@@ -4,6 +4,9 @@ import { apiGet, apiPost } from '../api'
 import RaceDraftView from './RaceDraftPage'
 import { createPortal } from 'react-dom'
 import { RACE_LABEL } from '../constants/races'
+import SetupModal from '../components/modals/SetupModal'
+import CardsModal from '../components/modals/CardsModal'
+
 
 // ✅ adjust these imports to your actual icon paths
 import cats from '../assets/races/root_cats.png'
@@ -16,6 +19,7 @@ import riverfolk from '../assets/races/root_riverfolk.png'
 import knights from '../assets/races/root_knights.png'
 import kingdom from '../assets/races/root_kingdom.png'
 import rats from '../assets/races/root_rats.png'
+import { CARDS, type CardDef, type Clearing, type CraftType, type Item } from '../data/cards'
 
 type MatchPlayerState = {
     playerId: number
@@ -137,6 +141,105 @@ const ui = {
         whiteSpace: 'nowrap',
         fontWeight: 1000,
         letterSpacing: 0.2,
+    } as const,
+
+    cardsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: 14,
+        alignItems: 'stretch',
+    } as const,
+
+    playerCard: (hex: string, timeUp: boolean, isRunning: boolean) =>
+        ({
+            borderRadius: 22,
+            border: timeUp
+                ? '2px solid rgba(239,68,68,0.90)'
+                : isRunning
+                    ? `2px solid ${mixRgba(hex, 0.70)}`
+                    : `1px solid ${mixRgba(hex, 0.26)}`,
+            background:
+                `radial-gradient(700px 260px at 10% 0%, ${mixRgba(hex, 0.18)}, transparent 60%), linear-gradient(180deg, rgba(16,16,20,1), rgba(10,10,12,1))`,
+            boxShadow: timeUp
+                ? '0 18px 55px rgba(239,68,68,0.20)'
+                : isRunning
+                    ? `0 18px 55px rgba(0,0,0,0.55), 0 0 60px ${mixRgba(hex, 0.18)}`
+                    : `0 16px 46px rgba(0,0,0,0.50), 0 0 48px ${mixRgba(hex, 0.10)}`,
+            padding: 14,
+            minHeight: 220,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: 10,
+        }) as const,
+
+    cardTopRow: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 10,
+    } as const,
+
+    smallName: {
+        fontSize: 20,
+        fontWeight: 1000,
+        letterSpacing: -0.2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    } as const,
+
+    smallTimer: (timeUp: boolean) =>
+        ({
+            fontSize: 34,
+            fontWeight: 1000,
+            fontVariantNumeric: 'tabular-nums',
+            color: timeUp ? 'rgba(248,113,113,0.92)' : 'rgba(255,255,255,0.92)',
+            lineHeight: 1,
+        }) as const,
+
+    timerRow: {
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: 10,
+    } as const,
+
+    timeControls: {
+        display: 'flex',
+        gap: 6,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+    } as const,
+
+    timeBtn: (variant: 'add' | 'sub', disabled: boolean) =>
+        ({
+            padding: '6px 9px',
+            borderRadius: 999,
+            border:
+                variant === 'add'
+                    ? '1px solid rgba(34,197,94,0.30)'
+                    : '1px solid rgba(248,113,113,0.28)',
+            background:
+                variant === 'add'
+                    ? 'rgba(34,197,94,0.10)'
+                    : 'rgba(248,113,113,0.08)',
+            color: 'rgba(255,255,255,0.92)',
+            fontWeight: 1000,
+            fontSize: 12,
+            letterSpacing: 0.2,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.55 : 1,
+            userSelect: 'none',
+            transition: 'transform 120ms ease, filter 120ms ease, opacity 120ms ease',
+        }) as const,
+
+
+    miniActionsRow: {
+        display: 'flex',
+        gap: 8,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     } as const,
 
     badgeStrong: (hex: string) =>
@@ -475,6 +578,175 @@ const ui = {
         color: 'rgba(255,255,255,0.92)',
         fontWeight: 900,
     } as const,
+
+    // cards modal
+    cardsModal: {
+        width: 'min(1120px, 100%)',
+        maxHeight: 'min(82vh, 860px)',
+        borderRadius: 22,
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: 'linear-gradient(180deg, rgba(16,16,20,1), rgba(10,10,12,1))',
+        boxShadow: '0 30px 90px rgba(0,0,0,0.60), 0 0 70px rgba(220,38,38,0.10)',
+        padding: 16,
+        color: 'rgba(255,255,255,0.92)',
+        display: 'grid',
+        gridTemplateRows: 'auto auto 1fr auto',
+        gap: 12,
+        overflow: 'hidden',
+    } as const,
+
+    cardsHeadRow: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+        flexWrap: 'wrap',
+    } as const,
+
+    cardsFiltersRow: {
+        display: 'flex',
+        gap: 10,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    } as const,
+
+    input: {
+        padding: '10px 12px',
+        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.14)',
+        background: 'rgba(255,255,255,0.06)',
+        color: 'rgba(255,255,255,0.92)',
+        outline: 'none',
+        fontWeight: 800,
+        letterSpacing: 0.2,
+        minWidth: 260,
+    } as const,
+
+    chip: (active: boolean) =>
+        ({
+            padding: '8px 10px',
+            borderRadius: 999,
+            border: active ? '1px solid rgba(59,130,246,0.42)' : '1px solid rgba(255,255,255,0.14)',
+            background: active ? 'rgba(59,130,246,0.16)' : 'rgba(255,255,255,0.05)',
+            color: 'rgba(255,255,255,0.92)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontWeight: 1000,
+            fontSize: 12,
+            letterSpacing: 0.2,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+        }) as const,
+
+    cardsGridMini: {
+        overflow: 'auto',
+        paddingRight: 6,
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+        gap: 12,
+        alignContent: 'start',
+    } as const,
+
+    cardTile: {
+        borderRadius: 18,
+        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.04)',
+        boxShadow: '0 14px 30px rgba(0,0,0,0.35)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease',
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr',
+    } as const,
+
+    cardImgMiniWrap: {
+        background: 'rgba(255,255,255,0.05)',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
+        minHeight: 120,
+    } as const,
+
+    cardImgMini: {
+        width: '100%',
+        height: 140,
+        objectFit: 'contain',
+        filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.45))',
+    } as const,
+
+    cardMeta: {
+        padding: 10,
+        display: 'grid',
+        gap: 6,
+    } as const,
+
+    cardName: {
+        fontWeight: 1000,
+        fontSize: 13,
+        lineHeight: 1.2,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+    } as const,
+
+    cardMetaLine: {
+        fontSize: 12,
+        opacity: 0.76,
+        display: 'flex',
+        gap: 8,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+    } as const,
+
+    // image preview (inside same modal)
+    previewWrap: {
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.72)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 18,
+        zIndex: 2147483647,
+    } as const,
+
+    previewCard: {
+        width: 'min(820px, 100%)',
+        borderRadius: 22,
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: 'linear-gradient(180deg, rgba(16,16,20,1), rgba(10,10,12,1))',
+        boxShadow: '0 30px 90px rgba(0,0,0,0.70)',
+        overflow: 'hidden',
+    } as const,
+
+    previewTop: {
+        padding: 12,
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+    } as const,
+
+    previewBody: {
+        padding: 14,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'rgba(255,255,255,0.03)',
+    } as const,
+
+    previewImg: {
+        width: '100%',
+        maxHeight: '72vh',
+        objectFit: 'contain',
+        filter: 'drop-shadow(0 22px 60px rgba(0,0,0,0.55))',
+    } as const,
+
 }
 
 function fmt(secs: number) {
@@ -623,23 +895,22 @@ function lsSetBool(key: string, val: boolean) {
 }
 
 const SETUP_HINT: Record<string, string> = {
-    CATS: '1. Wybierz 3 sąsiadujące polany ojczyste.\n2. Na każdej z nich umieść 2 wojowników.\n3. Na KAŻDEJ pozostałej połóż po jednym wojowniku.\n4. Token twierdzy połóż na jednej z polan ojczystych, najlepiej nie sąsiadującej z wrogą frakcją.\n5. Umieść 1 tartak, koszary oraz warsztat na polanach ojczystych (na każdej musi być jeden budynek).\n6. Umieść pozostałe żetony budynków na swojej planszy frakcji.',
-    EAGLES: '1. Wybierz polanę ojczystą - pomiędzy nią, a inną wrogą polaną ojczystą muszą znajdować się conajmniej 2 polany.\n2. Umieść na niej gniazdo i 6 wojowników.\n3. Wybierz Lidera i umieść go na swojej planszy; pozostałych odłóż na bok.\n4. Umieść swoich 2 Lojalnych Wezyrów pod odpowiednimi kolumnami dekretu.\n5. Umieść pozostałe gniazda na planszy swojej frakcji.',
-    ALLIANCE: '1. Dobierz 3 karty do swojej talii sympatyków.\n2. Umieść tokeny sympatyków oraz żetony baz na planszy swojej frakcji.',
+    CATS: '1. Wybierz 3 sąsiadujące ze sobą polany ojczyste.\n2. Na każdej z nich umieść 2 wojowników.\n3. Na KAŻDEJ pozostałej połóż po jednym wojowniku.\n4. Token twierdzy połóż na jednej z polan ojczystych, która nie sąsiaduje z polanami ojczystymi przeciwników, jeśli to możliwe.\n5. Rozmieść 1 tartak, koszary oraz warsztat na każdej swojej innej polanie ojczystej.\n6. Umieść pozostałe żetony budynków na swojej planszy frakcji.',
+    EAGLES: '1. Wybierz polanę ojczystą przy krawędzi Mapy, oddaloną o co najmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść na niej gniazdo i 6 wojowników.\n3. Wybierz Przywódcę i umieść go na swojej planszy; pozostałych odłóż na bok.\n4. Umieść swoich 2 Lojalnych Wezyrów pod odpowiednimi kolumnami dekretu, wskazanymi przez wybranego Przywódcę.\n5. Umieść pozostałe gniazda na planszy swojej frakcji.',
+    ALLIANCE: '1. Dobierz 3 karty i umieść je w swojej talii sympatyków.\n2. Umieść tokeny sympatyków oraz żetony baz na planszy swojej frakcji.',
     CROWS: '1. Wybierz polanę ojczystą i umieść na niej 1 wojownika i 1 dowolny żeton intrygi.\n2. Umieść 1 wojownika na 3 polanach różnego typu (czyli łącznie na planszy będzie 4 wojowników).',
-    VAGABOND: '1. Umieść swoją figurkę w dowolnym lesie.\n2. Potasuj talię misji i dobierz z niej 3 karty.\n3. Umieść 4 przedmioty w ruinach.\n4. Wybierz wędrowca którym zamierzasz grać i umieść jego kartę na planszy frakcji, łącznie z przedmiotami startowymi S.\n5. Umieść znaczniki relacji pozostałych frakcji na torze Relacji.',
-    LIZARDS: '1. Wybierz polanę ojczystą, nie sąsiadującą z żadną wrogą polaną ojczystą.\n2. Umieść na niej 4 wojowników i 1 ogród zgodny z typem polany. Umieść 3 wojowników na sąsiadujących polanach, starając się po tyle samo w każdej.\n3. Umieść 2 wojowników w obszarze Akolitów.\n4. Umieść ogrody na swojej planszy frakcji.\n5. Umieść żeton Wygnańców na wybranym przez siebie typie polan.',
-    OTTERS: '1. Umieść 4 wojowników na dowolnych polanach wzdłuż rzeki.\n2. Umieść 3 wojowników na polu Płatności.\n3. Umieść faktorie na odpowiednich torach faktorii. \n4. Ustal początkowe ceny usług.',
-    BADGERS: '1. Potajemnie przetasuj wszystkie 12 Reliktów i bez podglądania umieść po jednym w każdym lesie. Pozostałe będą potrzebne w kroku 3.\n2. Wybierz 2 sąsiadujące ojczyste polany na obrzeżach mapy. Między każdą z nich i wrogą ojczystą polaną muszą być min. 2 polany.\n3. Umieść wszystkie pozostałe relikty w lasach tak, aby były jak najrówniej rozłożone.\n4. Umieść Wierne Sługi pod każdą kolumną swojej Świty.',
+    VAGABOND: '1. Umieść swoją figurkę w dowolnym lesie.\n2. Potasuj talię misji. Dobierz z niej 3 karty i ułóż je odkryte w pobliżu.\n3. Umieść losowo 4 przedmioty w ruinach, chyba że zrobiłto już inny gracz nie grający Włóczęgą.\n4. Wybierz Włóczęgę którym zamierzasz grać i umieść jego kartę na planszy frakcji, łącznie z przedmiotami startowymi S.\n5. Umieść znaczniki relacji pozostałych frakcji na torze Relacji na polu "Neutralny".',
+    LIZARDS: '1. Wybierz polanę ojczystą, nie sąsiadującą z żadną wrogą polaną ojczystą.\n2. Umieść na niej 4 wojowników i 1 ogród zgodny z typem polany. Umieść 3 wojowników na sąsiadujących polanach, tak równo jak to możliwe.\n3. Umieść 2 wojowników na polu Akolitów.\n4. Umieść ogrody na swojej planszy frakcji.\n5. Umieść żeton Wygnańców na wybranym przez siebie typie polan, stroną Wygnańców do góry.',
+    OTTERS: '1. Umieść 4 wojowników na dowolnych polanach wzdłuż rzeki.\n2. Rozmieść 3 wojowników na polu Płatności.\n3. Rozmieść faktorie na odpowiednich torach faktorii. \n4. Ustal początkowe ceny usług.',
+    BADGERS: '1. Potajemnie przetasuj wszystkie 12 Reliktów i bez podglądania umieść po jednym w każdym lesie. Pozostałe będą potrzebne w kroku 3.\n2. Wybierz 2 sąsiadujące ojczyste polany na obrzeżach Mapy, każdą oddaloną o conajmniej 2 polany od polan ojczystych przeciwników.\n3. Umieść wszystkie pozostałe relikty w lasach tak, aby były jak najrówniej rozłożone. Nie mogą sąsiadować z twoimi polanami ojczystymi.\n4. Umieść Wierne Sługi pod każdą kolumną swojej Świty.',
     MOLES: '1. Wybierz ojczystą polanę, nie sąsiadującą z wrogą ojczystą polaną.\n2. Umieść na niej 2 wojowników i 1 tunel. Umieść 5 wojowników na sąsiadujących polanach tak równo, jak to możliwe.\n3. Umieść Norę obok mapy. Umieść budynki cytadel i targów na planszy frakcji.\n4. Umieść 9 kart Ministrów na polu Nieprzekonanych Ministrów oraz po 3 korony w odpowiednich miejscach na planszy frakcji.',
-    RATS: '1. Wybierz polanę ojczystą - pomiędzy nią, a inną wrogą polaną ojczystą muszą znajdować się conajmniej 2 polany.\n2. Umieść swojego Warlorda, 4 wojowników i Twierdzę na tej polanie.\n3. Umieść kartę Stubborn mood card na polu dla niej przeznaczonym. \n4. Umieść 4 przedmioty w ruinach (jesli jeszcze nie zostało to zrobione).',
+    RATS: '1. Wybierz polanę ojczystą przy krawędzi mapy, oddaloną o conajmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść swojego Lorda, 4 wojowników i Warownię na tej polanie.\n3. Umieść kartę nastroju Uparty na polu Karty Nastroju.\n4. Umieść 4 przedmioty w ruinach (jesli jeszcze nie zostało to zrobione).',
 }
 
 function setupTextForRace(race?: string | null) {
     const rk = raceKey(race)
     return SETUP_HINT[rk] ?? 'Rozstaw frakcję zgodnie z planszetką.'
 }
-
 
 export default function MatchPage() {
     const { matchId } = useParams()
@@ -661,6 +932,48 @@ export default function MatchPage() {
 
     const [flowStage, setFlowStage] = useState<FlowStage>('NONE')
     const [setupIndex, setSetupIndex] = useState(0)
+
+    // ✅ Cards modal
+    const [cardsOpen, setCardsOpen] = useState(false)
+    const [cardsSearch, setCardsSearch] = useState('')
+    const [fClearings, setFClearings] = useState<Record<Clearing, boolean>>({
+        MOUSE: false,
+        FOX: false,
+        RABBIT: false,
+        BIRD: false,
+    })
+    const [fCraft, setFCraft] = useState<Record<CraftType, boolean>>({
+        POINTS: false,
+        ABILITY: false,
+        DOMINANCE: false,
+    })
+    const [fItems, setFItems] = useState<Record<Item, boolean>>({
+        SACK: false,
+        BOOT: false,
+        SWORD: false,
+        CROSSBOW: false,
+        HAMMER: false,
+        TEAPOT: false,
+        COIN: false,
+        TORCH: false,
+    })
+    const [previewCard, setPreviewCard] = useState<CardDef | null>(null)
+
+    function resetCardFilters() {
+        setCardsSearch('')
+        setFClearings({ MOUSE: false, FOX: false, RABBIT: false, BIRD: false })
+        setFCraft({ POINTS: false, ABILITY: false, DOMINANCE: false})
+        setFItems({
+            SACK: false,
+            BOOT: false,
+            SWORD: false,
+            CROSSBOW: false,
+            HAMMER: false,
+            TEAPOT: false,
+            COIN: false,
+            TORCH: false,
+        })
+    }
 
     const prevDraftPhaseRef = useRef<DraftState['phase'] | null>(null)
     const prevDraftStatusRef = useRef<DraftState['status'] | null>(null)
@@ -898,6 +1211,24 @@ export default function MatchPage() {
         }
     }
 
+    async function refreshTimer(playerId: number) {
+        // ✅ natychmiast w UI
+        setRunningPlayerId((prev) => (prev === playerId ? null : prev))
+        alertedRef.current[playerId] = false
+        setLocalTime((prev) => ({ ...prev, [playerId]: presetSeconds }))
+
+        // ✅ zapis do backendu
+        try {
+            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, {
+                timeLeftSeconds: presetSeconds,
+            })
+            await load()
+        } catch (e: any) {
+            setError(e?.message ?? 'Failed to refresh timer')
+        }
+    }
+
+
     async function finish() {
         const ok = confirm('Finish match? This will update league standings.')
         if (!ok) return
@@ -947,12 +1278,40 @@ export default function MatchPage() {
                         setError(e?.message ?? 'Failed to set bans')
                     }
                 }}
+                onResetPick={() => apiPost(`/api/matches/${mid}/draft/reset-pick`)}
                 onRefresh={load}
             />
         )
     }
 
     const matchStarted = state?.status === 'RUNNING'
+    const filteredCards = useMemo(() => {
+        const search = cardsSearch.trim().toLowerCase()
+
+        const anyClearing = Object.values(fClearings).some(Boolean)
+        const anyCraft = Object.values(fCraft).some(Boolean)
+        const anyItem = Object.values(fItems).some(Boolean)
+
+        return CARDS.filter((c) => {
+            if (search) {
+                const okName =
+                    c.name.toLowerCase().includes(search) ||
+                    c.id.toLowerCase().includes(search)
+                if (!okName) return false
+            }
+
+            if (anyClearing && !fClearings[c.clearing]) return false
+            if (anyCraft && !fCraft[c.craftType]) return false
+
+            if (anyItem) {
+                if (!c.item) return false
+                if (!fItems[c.item]) return false
+            }
+
+            return true
+        })
+    }, [cardsSearch, fClearings, fCraft, fItems])
+
 
     const toPrev = () => {
         if (!playersInMatchOrder.length) return
@@ -997,84 +1356,24 @@ export default function MatchPage() {
                     </div>
 
                     {/* SETUP MODAL */}
-                    {flowStage !== 'NONE' &&
-                        createPortal(
-                            (() => {
-                                const p = playersInMatchOrder[setupIndex]
-                                const race = p?.race ?? null
-                                const rk = raceKey(race)
-                                const hex = RACE_COLOR[rk] ?? '#dc2626'
-                                const icon = RACE_ICON[rk] ?? ''
-                                const hint = setupTextForRace(race)
+                    <SetupModal
+                        open={flowStage !== 'NONE'}
+                        loading={loading}
+                        playersInMatchOrder={playersInMatchOrder}
+                        setupIndex={setupIndex}
+                        setSetupIndex={setSetupIndex}
+                        mid={mid}
+                        setFlowStage={setFlowStage}
+                        raceKey={raceKey}
+                        raceLabel={raceLabel}
+                        setupTextForRace={setupTextForRace}
+                        RACE_COLOR={RACE_COLOR}
+                        RACE_ICON={RACE_ICON}
+                        lsSetBool={lsSetBool}
+                        LS_SETUP={LS_SETUP}
+                        ui={ui}
+                    />
 
-                                return (
-                                    <div style={ui.overlay}>
-                                        <div style={ui.modal(hex)}>
-                                            <div style={ui.modalTitle}>
-                                                Setup: {p?.playerName ?? '—'} ({setupIndex + 1}/{playersInMatchOrder.length})
-                                            </div>
-
-                                            <div style={ui.modalBody}>
-                                                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
-                                                    {icon ? <img src={icon} alt={raceLabel(race)} style={{ ...ui.icon(hex), width: 54, height: 54 }} /> : null}
-
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={{ fontWeight: 1000, fontSize: 16, marginBottom: 4 }}>
-                                                            {raceLabel(race)}
-                                                        </div>
-
-                                                        <div style={{ opacity: 0.86, whiteSpace: 'pre-line', lineHeight: 1.45 }}>{hint}</div>
-
-                                                        <div style={{ marginTop: 10, opacity: 0.72 }}>
-                                                            Rozstaw frakcję gracza i kliknij <b>Next</b>.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div style={ui.modalFooter}>
-                                                <button
-                                                    style={ui.btn('ghost', loading)}
-                                                    onClick={() => {
-                                                        lsSetBool(LS_SETUP(mid), true)
-                                                        setFlowStage('NONE')
-                                                    }}
-                                                    disabled={loading}
-                                                >
-                                                    Skip
-                                                </button>
-                                                <button
-                                                    style={{
-                                                        ...ui.btn('race', loading, hex),
-                                                        color: 'rgba(255,255,255,0.92)',
-                                                    }}
-                                                    onClick={() => {
-                                                        const last = setupIndex >= playersInMatchOrder.length - 1
-                                                        if (last) {
-                                                            lsSetBool(LS_SETUP(mid), true)
-                                                            setFlowStage('NONE')
-                                                            return
-                                                        }
-                                                        setSetupIndex((i) => i + 1)
-                                                    }}
-                                                    disabled={loading}
-                                                    onMouseEnter={(e) => {
-                                                        if (loading) return
-                                                        e.currentTarget.style.transform = 'translateY(-1px)'
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.transform = 'translateY(0)'
-                                                    }}
-                                                >
-                                                    Next →
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })(),
-                            document.body,
-                        )}
                 </div>
 
                 {/* TOP PAGE ACTIONS */}
@@ -1146,39 +1445,35 @@ export default function MatchPage() {
                 {error && <div style={ui.errorBox}>Error: {error}</div>}
 
                 {/* BODY */}
-                {!state || !activePlayer ? (
+                {!state ? (
                     <div style={{ opacity: 0.78, color: 'rgba(255,255,255,0.72)' }}>{loading ? 'Loading…' : 'Match not found'}</div>
                 ) : (
-                    (() => {
-                        const activeRaceKey = raceKey(activePlayer?.race)
-                        const activeColor = RACE_COLOR[activeRaceKey] ?? '#dc2626'
-                        const activeIcon = RACE_ICON[activeRaceKey] ?? ''
+                    <div style={ui.layout}>
+                        {/* CENTER: ALL PLAYER CARDS */}
+                        <div style={ui.centerWrap}>
+                            <div style={{ width: 'min(980px, 100%)' }}>
+                                <div style={ui.cardsGrid}>
+                                    {playersInMatchOrder.map((p) => {
+                                        const rk = raceKey(p.race)
+                                        const hex = RACE_COLOR[rk] ?? '#dc2626'
+                                        const icon = RACE_ICON[rk] ?? ''
 
-                        const activeTime = localTime[activePlayer.playerId] ?? activePlayer.timeLeftSeconds
-                        const timeUp = activeTime <= 0
-                        const isRunning = runningPlayerId === activePlayer.playerId
+                                        const t = localTime[p.playerId] ?? p.timeLeftSeconds
+                                        const timeUp = t <= 0
+                                        const isRunning = runningPlayerId === p.playerId
+                                        const matchStarted = state?.status === 'RUNNING'
 
-                        const navDisabled = loading || !matchStarted || playersInMatchOrder.length <= 1 || runningPlayerId != null
-
-                        return (
-                            <div style={ui.layout}>
-                                {/* CENTER */}
-                                <div style={ui.centerWrap}>
-                                    <div style={ui.cardWrap}>
-                                        <div style={ui.activeCard(activeColor, timeUp)}>
-                                            {/* HEADER */}
-                                            <div style={ui.headerRow}>
-                                                <div style={ui.leftHeader}>
+                                        return (
+                                            <div key={p.playerId} style={ui.playerCard(hex, timeUp, isRunning)}>
+                                                {/* TOP */}
+                                                <div style={ui.cardTopRow}>
                                                     <div style={{ minWidth: 0 }}>
-                                                        <div style={ui.titleName} title={activePlayer.playerName}>
-                                                            {activePlayer.playerName}
+                                                        <div style={ui.smallName} title={p.playerName}>
+                                                            {p.playerName}
                                                         </div>
 
-                                                        <div style={ui.subtitleRace}>
-                                                            <span style={ui.badgeStrong(activeColor)}>{raceLabel(activePlayer.race)}</span>
-                                                            <span style={ui.badge}>
-                                                                Active: <b>{activeIndex + 1}</b> / {playersInMatchOrder.length}
-                                                            </span>
+                                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 6 }}>
+                                                            <span style={ui.badgeStrong(hex)}>{raceLabel(p.race)}</span>
 
                                                             {timeUp ? (
                                                                 <span style={ui.badgeStrong('#ef4444')}>TIME UP</span>
@@ -1189,186 +1484,263 @@ export default function MatchPage() {
                                                             )}
                                                         </div>
                                                     </div>
+
+                                                    {icon ? (
+                                                        <img
+                                                            src={icon}
+                                                            alt={raceLabel(p.race)}
+                                                            title={raceLabel(p.race)}
+                                                            style={{ ...ui.heroIcon(hex), width: 56, height: 56, padding: 8, borderRadius: 16 }}
+                                                        />
+                                                    ) : null}
                                                 </div>
-                                            </div>
 
-                                            {/* TIMER */}
-                                            <div style={{ paddingTop: 8, paddingBottom: 10 }}>
-                                                <div style={ui.timerGrid}>
-                                                    <div style={ui.sideCol('flex-start')}>
-                                                        <div style={ui.sideRow}>
-                                                            <button
-                                                                onClick={() => removeMinute(activePlayer.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={ui.btn('ghost', loading || !matchStarted)}
-                                                            >
-                                                                −1 min
-                                                            </button>
-                                                            <button
-                                                                onClick={() => removeSecond(activePlayer.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={ui.btn('ghost', loading || !matchStarted)}
-                                                            >
-                                                                −1 s
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ textAlign: 'center' }}>
-                                                        <div style={ui.timerTop}>
-                                                            {activeIcon ? (
-                                                                <img
-                                                                    src={activeIcon}
-                                                                    alt={raceLabel(activePlayer.race)}
-                                                                    title={raceLabel(activePlayer.race)}
-                                                                    style={ui.heroIcon(activeColor)}
-                                                                />
-                                                            ) : null}
-
-                                                            <div style={ui.bigTimer(timeUp)}>{fmt(activeTime)}</div>
-                                                        </div>
-
-                                                        <div style={{ marginTop: 2, fontSize: 14, opacity: 0.72, color: 'rgba(255,255,255,0.72)' }}>
-                                                            time left
-                                                        </div>
-                                                    </div>
-
-
-                                                    <div style={ui.sideCol('flex-end')}>
-                                                        <div style={ui.sideRow}>
-                                                            <button
-                                                                onClick={() => addMinute(activePlayer.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={ui.btn('ghost', loading || !matchStarted)}
-                                                            >
-                                                                +1 min
-                                                            </button>
-                                                            <button
-                                                                onClick={() => addSecond(activePlayer.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={ui.btn('ghost', loading || !matchStarted)}
-                                                            >
-                                                                +1 s
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* ACTIONS */}
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                                {timeUp ? (
-                                                    <button
-                                                        onClick={() => resetTimer(activePlayer.playerId)}
-                                                        disabled={loading || !matchStarted}
-                                                        style={ui.btn('danger', loading || !matchStarted)}
-                                                    >
-                                                        Reset timer to {presetSeconds}s
-                                                    </button>
-                                                ) : (
-                                                    <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                                                            <button onClick={() => scoreDelta(activePlayer.playerId, -1)} disabled={loading || !matchStarted} style={ui.btn('ghost', loading || !matchStarted)}>
-                                                                −1
-                                                            </button>
-
-                                                            <div style={{ minWidth: 110, textAlign: 'center' }}>
-                                                                <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)' }}>score</div>
-                                                                <div style={{ fontSize: 30, fontWeight: 1000, fontVariantNumeric: 'tabular-nums' }}>{activePlayer.score}</div>
+                                                {/* TIMER + QUICK TIME CONTROLS */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={ui.timerRow}>
+                                                            <div>
+                                                                <div style={ui.smallTimer(timeUp)}>{fmt(t)}</div>
+                                                                <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)', marginTop: 4 }}>
+                                                                    time left
+                                                                </div>
                                                             </div>
 
-                                                            <button onClick={() => scoreDelta(activePlayer.playerId, +1)} disabled={loading || !matchStarted} style={ui.btn('ghost', loading || !matchStarted)}>
-                                                                +1
-                                                            </button>
-                                                        </div>
+                                                            {/* ✅ TIME BUTTONS */}
+                                                            <div style={ui.timeControls}>
+                                                                <button
+                                                                    onClick={() => removeSecond(p.playerId)}
+                                                                    disabled={loading || !matchStarted}
+                                                                    style={ui.timeBtn('sub', loading || !matchStarted)}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (loading || !matchStarted) return
+                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
+                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(0)'
+                                                                        e.currentTarget.style.filter = 'none'
+                                                                    }}
+                                                                    title="-1 second"
+                                                                >
+                                                                    −1s
+                                                                </button>
 
+                                                                <button
+                                                                    onClick={() => addSecond(p.playerId)}
+                                                                    disabled={loading || !matchStarted}
+                                                                    style={ui.timeBtn('add', loading || !matchStarted)}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (loading || !matchStarted) return
+                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
+                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(0)'
+                                                                        e.currentTarget.style.filter = 'none'
+                                                                    }}
+                                                                    title="+1 second"
+                                                                >
+                                                                    +1s
+                                                                </button>
+
+                                                                <button
+                                                                    onClick={() => removeMinute(p.playerId)}
+                                                                    disabled={loading || !matchStarted}
+                                                                    style={ui.timeBtn('sub', loading || !matchStarted)}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (loading || !matchStarted) return
+                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
+                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(0)'
+                                                                        e.currentTarget.style.filter = 'none'
+                                                                    }}
+                                                                    title="-1 minute"
+                                                                >
+                                                                    −1m
+                                                                </button>
+
+                                                                <button
+                                                                    onClick={() => addMinute(p.playerId)}
+                                                                    disabled={loading || !matchStarted}
+                                                                    style={ui.timeBtn('add', loading || !matchStarted)}
+                                                                    onMouseEnter={(e) => {
+                                                                        if (loading || !matchStarted) return
+                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
+                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.currentTarget.style.transform = 'translateY(0)'
+                                                                        e.currentTarget.style.filter = 'none'
+                                                                    }}
+                                                                    title="+1 minute"
+                                                                >
+                                                                    +1m
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ textAlign: 'right' }}>
+                                                        <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)' }}>score</div>
+                                                        <div style={{ fontSize: 26, fontWeight: 1000, fontVariantNumeric: 'tabular-nums' }}>{p.score}</div>
+                                                    </div>
+                                                </div>
+
+
+                                                {/* ACTIONS */}
+                                                <div style={ui.miniActionsRow}>
+                                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                                        <button
+                                                            onClick={() => scoreDelta(p.playerId, -1)}
+                                                            disabled={loading || !matchStarted}
+                                                            style={ui.btn('ghost', loading || !matchStarted)}
+                                                        >
+                                                            −1
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => scoreDelta(p.playerId, +1)}
+                                                            disabled={loading || !matchStarted}
+                                                            style={ui.btn('ghost', loading || !matchStarted)}
+                                                        >
+                                                            +1
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => refreshTimer(p.playerId)}
+                                                            disabled={loading || !matchStarted}
+                                                            style={ui.btn('ghost', loading || !matchStarted)}
+                                                            title={`Set timer back to ${presetSeconds}s`}
+                                                        >
+                                                            ⟳ Timer
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                                                         {!isRunning ? (
-                                                            <button onClick={() => setRunning(activePlayer.playerId)} disabled={loading || !matchStarted} style={{
-                                                                ...ui.btn('race', loading || !matchStarted, activeColor),
-                                                                color: 'rgba(255,255,255,0.92)',
-                                                            }}>
-                                                                Start timer
+                                                            <button
+                                                                onClick={() => setRunning(p.playerId)}
+                                                                disabled={loading || !matchStarted}
+                                                                style={{
+                                                                    ...ui.btn('race', loading || !matchStarted, hex),
+                                                                    color: 'rgba(255,255,255,0.92)',
+                                                                }}
+                                                            >
+                                                                Start
                                                             </button>
                                                         ) : (
-                                                            <button onClick={() => stopRunning(activePlayer.playerId)} disabled={loading || !matchStarted} style={ui.btn('danger', loading || !matchStarted)}>
-                                                                Stop & save
+                                                            <button
+                                                                onClick={() => stopRunning(p.playerId)}
+                                                                disabled={loading || !matchStarted}
+                                                                style={ui.btn('danger', loading || !matchStarted)}
+                                                            >
+                                                                Stop
                                                             </button>
                                                         )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* NAV DOCK */}
-                                        <div style={ui.navDock}>
-                                            <div style={ui.navDockSide}>
-                                                <button onClick={toPrev} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
-                                                    ← Prev
-                                                </button>
-                                            </div>
-
-                                            <div style={ui.navDockSide}>
-                                                <button onClick={toNext} style={ui.btn('ghost', navDisabled)} disabled={navDisabled}>
-                                                    Next →
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* RIGHT: SCOREBOARD */}
-                                <div style={ui.panel}>
-                                    <div style={ui.panelHead}>
-                                        <div>Scoreboard</div>
-                                        <span style={ui.badgeStrong(activeColor)}>active aura</span>
-                                    </div>
-
-                                    <div style={ui.tableHeadRow}>
-                                        <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78 }}>Player / Race</div>
-                                        <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78, textAlign: 'right' }}>Score</div>
-                                    </div>
-
-                                    <div style={ui.tableWrap}>
-                                        {playersInMatchOrder.map((p) => {
-                                            const rk = raceKey(p.race)
-                                            const icon = RACE_ICON[rk] ?? ''
-                                            const hex = RACE_COLOR[rk] ?? '#dc2626'
-                                            const isActiveRow = p.playerId === activePlayer.playerId
-
-                                            return (
-                                                <div
-                                                    key={p.playerId}
-                                                    style={ui.scoreboardRow(hex, isActiveRow)}
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.background = mixRgba(hex, isActiveRow ? 0.20 : 0.14)
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.background = isActiveRow ? mixRgba(hex, 0.16) : mixRgba(hex, 0.08)
-                                                    }}
-                                                >
-                                                    <div style={{ ...ui.tableCell, display: 'flex', gap: 10, alignItems: 'center' }}>
-                                                        <div style={{ minWidth: 0 }}>
-                                                            <div style={ui.playerName}>{p.playerName}</div>
-
-                                                            <div style={ui.raceLine}>
-                                                                {icon ? <img src={icon} alt={raceLabel(p.race)} style={ui.miniIcon(hex)} /> : null}
-                                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                    {raceLabel(p.race)}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={ui.score}>{p.score}</div>
                                                 </div>
-                                            )
-                                        })}
-                                    </div>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             </div>
-                        )
-                    })()
+                        </div>
+
+                        {/* RIGHT: SCOREBOARD (zostaje jak było) */}
+                        <div style={{ display: 'grid', gap: 12 }}>
+
+                            <div style={ui.panel}>
+                                <div style={ui.panelHead}>
+                                    <div>Scoreboard</div>
+                                    <span style={ui.badgeStrong('#dc2626')}>blood ledger</span>
+                                </div>
+
+                                <div style={ui.tableHeadRow}>
+                                    <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78 }}>Player / Race</div>
+                                    <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78, textAlign: 'right' }}>Score</div>
+                                </div>
+
+                                <div style={ui.tableWrap}>
+                                    {playersInMatchOrder.map((p) => {
+                                        const rk = raceKey(p.race)
+                                        const icon = RACE_ICON[rk] ?? ''
+                                        const hex = RACE_COLOR[rk] ?? '#dc2626'
+                                        const isActiveRow = runningPlayerId === p.playerId
+
+                                        return (
+                                            <div
+                                                key={p.playerId}
+                                                style={ui.scoreboardRow(hex, isActiveRow)}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = mixRgba(hex, isActiveRow ? 0.20 : 0.14)
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = isActiveRow ? mixRgba(hex, 0.16) : mixRgba(hex, 0.08)
+                                                }}
+                                            >
+                                                <div style={{ ...ui.tableCell, display: 'flex', gap: 10, alignItems: 'center' }}>
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div style={ui.playerName}>{p.playerName}</div>
+
+                                                        <div style={ui.raceLine}>
+                                                            {icon ? <img src={icon} alt={raceLabel(p.race)} style={ui.miniIcon(hex)} /> : null}
+                                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                {raceLabel(p.race)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div style={ui.score}>{p.score}</div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                            <button
+                                style={ui.btn('ghost', loading)}
+                                disabled={loading}
+                                onClick={() => setCardsOpen(true)}
+                                onMouseEnter={(e) => {
+                                    if (loading) return
+                                    e.currentTarget.style.transform = 'translateY(-1px)'
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)'
+                                }}
+                            >
+                                Show cards
+                            </button>
+                        </div>
+                    </div>
                 )}
+
+                {/* CARDS MODAL */}
+                <CardsModal
+                    open={cardsOpen}
+                    loading={loading}
+                    cardsSearch={cardsSearch}
+                    setCardsSearch={setCardsSearch}
+                    fClearings={fClearings}
+                    setFClearings={setFClearings}
+                    fCraft={fCraft}
+                    setFCraft={setFCraft}
+                    fItems={fItems}
+                    setFItems={setFItems}
+                    previewCard={previewCard}
+                    setPreviewCard={setPreviewCard}
+                    filteredCards={filteredCards}
+                    totalCards={CARDS.length}
+                    onResetFilters={resetCardFilters}
+                    onClose={() => {
+                        setCardsOpen(false)
+                        setPreviewCard(null)
+                    }}
+                    ui={ui}
+                />
             </div>
         </div>
     )

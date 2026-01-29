@@ -1,0 +1,344 @@
+[
+  {
+    "id": "biuro_propagandy_lisia",
+    "name": "Biuro Propagandy",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "dominacja_krolicza",
+    "name": "Dominacja",
+    "clearing": "RABBIT",
+    "craftType": "DOMINANCE",
+    "numberOfCards": 1
+  },
+  {
+    "id": "dominacja_lisia",
+    "name": "Dominacja",
+    "clearing": "FOX",
+    "craftType": "DOMINANCE",
+    "numberOfCards": 1
+  },
+  {
+    "id": "dominacja_mysia",
+    "name": "Dominacja",
+    "clearing": "MOUSE",
+    "craftType": "DOMINANCE",
+    "numberOfCards": 1
+  },
+  {
+    "id": "dominacja_ptasia",
+    "name": "Dominacja",
+    "clearing": "BIRD",
+    "craftType": "DOMINANCE",
+    "numberOfCards": 1
+  },
+  {
+    "id": "donosiciele_lisia",
+    "name": "Donosiciele",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  },
+  {
+    "id": "falszywe_rozkazy_lisia",
+    "name": "Falszywe Rozkazy",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  },
+  {
+    "id": "goniec_lesnogrodu_ptasia",
+    "name": "Goniec Lesnogrodu",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "BOOT"
+  },
+  {
+    "id": "handlarz_bronia_ptasia",
+    "name": "Handlarz Bronia",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SWORD"
+  },
+  {
+    "id": "herbata_korzenna_krolicza",
+    "name": "Herbata Korzenna",
+    "clearing": "RABBIT",
+    "craftType": "POINTS",
+    "numberOfCards": 1,
+    "item": "TEAPOT"
+  },
+  {
+    "id": "herbata_korzenna_lisia",
+    "name": "Herbata Korzenna",
+    "clearing": "FOX",
+    "craftType": "POINTS",
+    "numberOfCards": 1,
+    "item": "TEAPOT"
+  },
+  {
+    "id": "herbata_korzenna_mysia",
+    "name": "Herbata Korzenna",
+    "clearing": "MOUSE",
+    "craftType": "POINTS",
+    "numberOfCards": 1,
+    "item": "TEAPOT"
+  },
+  {
+    "id": "inwestycje_mysia",
+    "name": "Inwestycje",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "COIN"
+  },
+  {
+    "id": "jadlodajnie_ptasia",
+    "name": "Jadlodajnie",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "kiermasz_ciast_krolicza",
+    "name": "Kiermasz Ciast",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "COIN"
+  },
+  {
+    "id": "kowadlo_lisia",
+    "name": "Kowadlo",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "HAMMER"
+  },
+  {
+    "id": "kroliczy_partyzanci_krolicza",
+    "name": "Kroliczy Partyzanci",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "kruczy_konspiratorzy_ptasia",
+    "name": "Kruczy Konspiratorzy",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "kusza_mysia",
+    "name": "Kusza",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "CROSSBOW"
+  },
+  {
+    "id": "kusza_ptasia",
+    "name": "Kusza",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "CROSSBOW"
+  },
+  {
+    "id": "lekko_zuzyty_worek_lisia",
+    "name": "Lekko Zuzyty Worek",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SACK"
+  },
+  {
+    "id": "lisia_stal_lisia",
+    "name": "Lisia Stal",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SWORD"
+  },
+  {
+    "id": "lisi_partyzanci_lisia",
+    "name": "Lisi Partyzanci",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "miecz_mysia",
+    "name": "Miecz",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SWORD"
+  },
+  {
+    "id": "misja_meznych_myszy_mysia",
+    "name": "Misja Meznych Myszy",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  },
+  {
+    "id": "mistrz_dluta_mysia",
+    "name": "Mistrz Dluta",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "mysi_macher_mysia",
+    "name": "Mysi Macher",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "mysi_partyzanci_mysia",
+    "name": "Mysi Partyzanci",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "mysz_w_worku_mysia",
+    "name": "Mysz W Worku",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SACK"
+  },
+  {
+    "id": "napad_zyczliwosci_krolicza",
+    "name": "Napad Zyczliwosci",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "oplata_za_ochrone_lisia",
+    "name": "Oplata Za Ochrone",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "COIN"
+  },
+  {
+    "id": "przyjacielska_wizyta_krolicza",
+    "name": "Przyjacielska Wizyta",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "BOOT"
+  },
+  {
+    "id": "ptasi_banita_ptasia",
+    "name": "Ptasi Banita",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "ptasi_tobolek_ptasia",
+    "name": "Ptasi Tobolek",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SACK"
+  },
+  {
+    "id": "sabotazysci_ptasia",
+    "name": "Sabotazysci",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 3
+  },
+  {
+    "id": "sprzet_podrozny_lisia",
+    "name": "Sprzet Podrozny",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "BOOT"
+  },
+  {
+    "id": "sprzet_podrozny_mysia",
+    "name": "Sprzet Podrozny",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "BOOT"
+  },
+  {
+    "id": "szkutnicy_ptasia",
+    "name": "Szkutnicy",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "szlak_przemytnikow_krolicza",
+    "name": "Szlak Przemytnikow",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1,
+    "item": "SACK"
+  },
+  {
+    "id": "trumniarze_krolicza",
+    "name": "Trumniarze",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "tunele_krolicza",
+    "name": "Tunele",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  },
+  {
+    "id": "wymiana_towarow_krolicza",
+    "name": "Wymiana Towarow",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  },
+  {
+    "id": "zasadzka_krolicza",
+    "name": "Zasadzka",
+    "clearing": "RABBIT",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "zasadzka_lisia",
+    "name": "Zasadzka",
+    "clearing": "FOX",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "zasadzka_mysia",
+    "name": "Zasadzka",
+    "clearing": "MOUSE",
+    "craftType": "ABILITY",
+    "numberOfCards": 1
+  },
+  {
+    "id": "zasadzka_ptasia",
+    "name": "Zasadzka",
+    "clearing": "BIRD",
+    "craftType": "ABILITY",
+    "numberOfCards": 2
+  }
+]

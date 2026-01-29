@@ -29,7 +29,6 @@ const ALL_RACES = Object.keys(RACE_ICON)
 const VAGABOND = 'VAGABOND'
 const raceLabel = (race?: string | null) => (race ? RACE_LABEL[race] ?? race : '—')
 
-
 export type MatchPlayerState = {
   playerId: number
   playerName: string
@@ -71,8 +70,7 @@ const ui = {
     background:
       'radial-gradient(900px 400px at 20% 0%, rgba(220,38,38,0.22), transparent 55%), radial-gradient(800px 360px at 85% 10%, rgba(59,130,246,0.18), transparent 60%), linear-gradient(180deg, rgba(10,10,12,0.92), rgba(16,10,12,0.88))',
     border: '1px solid rgba(255,255,255,0.08)',
-    boxShadow:
-      '0 28px 80px rgba(0,0,0,0.45), 0 0 60px rgba(220,38,38,0.10)',
+    boxShadow: '0 28px 80px rgba(0,0,0,0.45), 0 0 60px rgba(220,38,38,0.10)',
     backdropFilter: 'blur(10px)',
   } as const,
 
@@ -119,8 +117,7 @@ const ui = {
     borderRadius: 18,
     padding: 14,
     border: '1px solid rgba(255,255,255,0.10)',
-    background:
-      'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
+    background: 'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
     boxShadow: '0 18px 55px rgba(0,0,0,0.35)',
   } as const,
 
@@ -164,19 +161,16 @@ const ui = {
 
     const map = {
       hot: {
-        background:
-          'linear-gradient(135deg, rgba(220,38,38,0.90), rgba(127,29,29,0.88))',
+        background: 'linear-gradient(135deg, rgba(220,38,38,0.90), rgba(127,29,29,0.88))',
         color: 'rgba(255,255,255,0.95)',
         boxShadow: '0 16px 34px rgba(220,38,38,0.22)',
       },
       ok: {
-        background:
-          'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(255,255,255,0.04))',
+        background: 'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(255,255,255,0.04))',
         color: 'rgba(255,255,255,0.88)',
       },
       info: {
-        background:
-          'linear-gradient(135deg, rgba(59,130,246,0.24), rgba(255,255,255,0.04))',
+        background: 'linear-gradient(135deg, rgba(59,130,246,0.24), rgba(255,255,255,0.04))',
         color: 'rgba(255,255,255,0.88)',
       },
       ghost: {
@@ -281,9 +275,7 @@ const ui = {
     ({
       borderRadius: 16,
       padding: 12,
-      border: isCurrent
-        ? '1px solid rgba(220,38,38,0.25)'
-        : '1px solid rgba(255,255,255,0.10)',
+      border: isCurrent ? '1px solid rgba(220,38,38,0.25)' : '1px solid rgba(255,255,255,0.10)',
       background: isCurrent
         ? 'linear-gradient(180deg, rgba(220,38,38,0.14), rgba(255,255,255,0.03))'
         : 'rgba(255,255,255,0.04)',
@@ -333,6 +325,50 @@ const ui = {
     marginTop: 12,
     color: 'rgba(255,255,255,0.9)',
   } as const,
+
+  // ✅ CONFIRM MODAL
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.62)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 18,
+    zIndex: 2147483647,
+  } as const,
+
+  modal: {
+    width: 'min(640px, 100%)',
+    borderRadius: 18,
+    border: '1px solid rgba(255,255,255,0.14)',
+    background: 'linear-gradient(180deg, rgba(14,14,18,1), rgba(10,10,12,1))',
+    boxShadow: '0 30px 90px rgba(0,0,0,0.60), 0 0 70px rgba(220,38,38,0.10)',
+    padding: 16,
+  } as const,
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 1000,
+    letterSpacing: 0.2,
+    marginBottom: 6,
+    color: 'rgba(255,255,255,0.92)',
+  } as const,
+
+  modalBody: {
+    fontSize: 14,
+    opacity: 0.86,
+    lineHeight: 1.6,
+    marginBottom: 12,
+    color: 'rgba(255,255,255,0.80)',
+  } as const,
+
+  modalFooter: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: 10,
+    flexWrap: 'wrap',
+  } as const,
 }
 
 function Badge({ text, variant }: { text: string; variant: 'hot' | 'ghost' | 'ok' | 'info' }) {
@@ -348,15 +384,17 @@ export default function RaceDraftView({
   onPick,
   onSetBans,
   onRefresh,
+  onResetPick,
 }: {
   matchId: number
   draft: DraftState
   players: MatchPlayerState[]
   loading: boolean
   error: string | null
-  onPick: (playerId: number, race: string) => void
-  onSetBans?: (bans: string[]) => void
+  onPick: (playerId: number, race: string) => void | Promise<void>
+  onSetBans?: (bans: string[]) => void | Promise<void>
   onRefresh?: () => void
+  onResetPick?: () => Promise<any>
 }) {
   const playersById = useMemo(() => {
     const m = new Map<number, MatchPlayerState>()
@@ -374,11 +412,7 @@ export default function RaceDraftView({
     setLocalBans(draft.bannedRaces ?? [])
   }, [draft.bannedRaces, draft.matchId, draft.phase])
 
-  const vagabondBanCount = useMemo(
-    () => localBans.filter((r) => r === VAGABOND).length,
-    [localBans],
-  )
-
+  const vagabondBanCount = useMemo(() => localBans.filter((r) => r === VAGABOND).length, [localBans])
   const nonVagabondBans = useMemo(() => new Set(localBans.filter((r) => r !== VAGABOND)), [localBans])
 
   const bansCount = localBans.length
@@ -396,6 +430,31 @@ export default function RaceDraftView({
   }, [draft.pickOrder, players])
 
   const canAddMoreBans = bansCount < maxBans
+  const bansValid = bansCount <= maxBans
+
+  // ✅ confirm przed OSTATNIM pickiem
+  const [confirmLastPickOpen, setConfirmLastPickOpen] = useState(false)
+  const [pendingPick, setPendingPick] = useState<{ playerId: number; race: string } | null>(null)
+
+  const isLastPick =
+    draft.phase === 'PICK' &&
+    draft.status === 'DRAFTING' &&
+    remainingPicks === 1 &&
+    draft.currentPlayerId != null
+
+
+  // ✅ CONFIRM FINISH
+  const [finishOpen, setFinishOpen] = useState(false)
+  const [finishShownOnce, setFinishShownOnce] = useState(false)
+
+  // pokaż modal, kiedy backend zgłosi FINISHED (np. po ostatnim picku)
+  useEffect(() => {
+    if (draft.phase !== 'PICK') return
+    if (draft.status !== 'FINISHED') return
+    if (finishShownOnce) return
+    setFinishShownOnce(true)
+    setFinishOpen(true)
+  }, [draft.phase, draft.status, finishShownOnce])
 
   function toggleBan(race: string) {
     if (draft.phase !== 'BAN') return
@@ -439,8 +498,6 @@ export default function RaceDraftView({
     setLocalBans([])
   }
 
-  const bansValid = bansCount <= maxBans
-
   return (
     <div style={ui.page}>
       <div style={ui.backdrop}>
@@ -454,17 +511,17 @@ export default function RaceDraftView({
           </div>
 
           <div style={ui.rightBadges}>
-            {draft.status === 'DRAFTING' ? (
-              <Badge variant="hot" text="DRAFTING" />
-            ) : (
-              <Badge variant="ghost" text="FINISHED" />
-            )}
-
+            {draft.status === 'DRAFTING' ? <Badge variant="hot" text="DRAFTING" /> : <Badge variant="ghost" text="FINISHED" />}
             {draft.phase === 'BAN' ? <Badge variant="info" text="BAN" /> : <Badge variant="info" text="PICK" />}
 
             {onRefresh && (
               <button
-                onClick={onRefresh}
+                onClick={async () => {
+                  if (draft.phase === 'PICK' && draft.status === 'DRAFTING' && onResetPick) {
+                    await onResetPick()
+                  }
+                  onRefresh()
+                }}
                 disabled={loading}
                 style={ui.btn('ghost', loading)}
                 onMouseEnter={(e) => {
@@ -487,6 +544,79 @@ export default function RaceDraftView({
           </div>
         )}
 
+        {/* ✅ CONFIRM LAST PICK MODAL (pokazuje się zanim draft skończy się na backendzie) */}
+        {confirmLastPickOpen && pendingPick && (
+          <div style={ui.overlay}>
+            <div style={ui.modal}>
+              <div style={ui.modalTitle}>Ostatni pick</div>
+
+              <div style={ui.modalBody}>
+                To jest <b>ostatni pick</b>. Po nim draft zostanie zakończony i przejdziesz dalej do meczu.
+                <div style={{ marginTop: 10, opacity: 0.9 }}>
+                  Wybrana rasa: <b>{raceLabel(pendingPick.race)}</b>
+                </div>
+              </div>
+
+              <div style={ui.modalFooter}>
+                <button
+                  style={ui.btn('ghost', loading)}
+                  disabled={loading}
+                  onClick={() => {
+                    setConfirmLastPickOpen(false)
+                    setPendingPick(null)
+                  }}
+                >
+                  Anuluj
+                </button>
+
+                <button
+                  style={ui.btn('open', loading)}
+                  disabled={loading}
+                  onClick={async () => {
+                    try {
+                      await onPick(pendingPick.playerId, pendingPick.race)
+                    } finally {
+                      setConfirmLastPickOpen(false)
+                      setPendingPick(null)
+                      onRefresh?.()
+                    }
+                  }}
+                >
+                  Zakończ draft →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ FINISH CONFIRM MODAL */}
+        {finishOpen && (
+          <div style={ui.overlay}>
+            <div style={ui.modal}>
+              <div style={ui.modalTitle}>Draft zakończony</div>
+              <div style={ui.modalBody}>
+                Ostatni pick został wykonany i draft jest <b>FINISHED</b>. Kliknij <b>Przejdź dalej</b>, aby wrócić do meczu.
+              </div>
+              <div style={ui.modalFooter}>
+                <button style={ui.btn('ghost', loading)} disabled={loading} onClick={() => setFinishOpen(false)}>
+                  Zostań tutaj
+                </button>
+                <button
+                  style={ui.btn('open', loading)}
+                  disabled={loading}
+                  onClick={() => {
+                    setFinishOpen(false)
+                    // parent i tak po statusie FINISHED wyrzuci z draftu (BLOCKING DRAFT VIEW) na MatchPage
+                    onRefresh?.()
+                  }}
+                >
+                  Przejdź dalej →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* BAN PHASE */}
         {draft.phase === 'BAN' && (
           <div style={ui.card}>
@@ -501,11 +631,7 @@ export default function RaceDraftView({
               <div style={ui.rightBadges}>
                 <Badge variant="ghost" text={`Bans: ${bansCount}/${maxBans}`} />
                 <Badge variant="ghost" text={`Left: ${bansLeft}`} />
-                <button
-                  onClick={clearBans}
-                  disabled={loading || draft.status !== 'DRAFTING'}
-                  style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}
-                >
+                <button onClick={clearBans} disabled={loading || draft.status !== 'DRAFTING'} style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}>
                   🧹 Clear
                 </button>
               </div>
@@ -554,9 +680,7 @@ export default function RaceDraftView({
             </div>
 
             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={ui.sub}>
-                Selected bans are sent as a list. VAGABOND can appear twice to ban both copies.
-              </div>
+              <div style={ui.sub}>Selected bans are sent as a list. VAGABOND can appear twice to ban both copies.</div>
 
               <button
                 onClick={() => onSetBans?.(localBans)}
@@ -573,7 +697,6 @@ export default function RaceDraftView({
         {/* PICK PHASE */}
         {draft.phase === 'PICK' && (
           <>
-            {/* Current picker */}
             <div style={ui.card}>
               <div style={ui.cardHeader}>
                 <div>
@@ -590,7 +713,6 @@ export default function RaceDraftView({
               </div>
             </div>
 
-            {/* Pool */}
             <div style={ui.card}>
               <h2 style={ui.h2}>Available races</h2>
 
@@ -604,8 +726,18 @@ export default function RaceDraftView({
                       <button
                         key={`${race}-${idx}`}
                         onClick={() => {
-                          if (draft.currentPlayerId != null) onPick(draft.currentPlayerId, race)
+                          if (draft.currentPlayerId == null) return
+
+                          // ✅ jeśli to ostatni pick – pokaż confirm zanim wyślesz do backendu
+                          if (isLastPick) {
+                            setPendingPick({ playerId: draft.currentPlayerId, race })
+                            setConfirmLastPickOpen(true)
+                            return
+                          }
+
+                          onPick(draft.currentPlayerId, race)
                         }}
+
                         disabled={disabled}
                         title={raceLabel(race)}
                         style={ui.raceTile('pick', disabled)}
@@ -624,12 +756,9 @@ export default function RaceDraftView({
                 </div>
               )}
 
-              <div style={ui.hint}>
-                Tip: click a race to assign it to the current player. (Backend enforces turn order.)
-              </div>
+              <div style={ui.hint}>Tip: click a race to assign it to the current player. (Backend enforces turn order.)</div>
             </div>
 
-            {/* Pick order + assignments */}
             <div style={ui.card}>
               <h2 style={ui.h2}>Players</h2>
 
