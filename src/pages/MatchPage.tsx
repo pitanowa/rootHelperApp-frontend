@@ -1253,6 +1253,34 @@ export default function MatchPage() {
         }
     }
 
+    const matchStarted = state?.status === 'RUNNING'
+    const filteredCards = useMemo(() => {
+        const search = cardsSearch.trim().toLowerCase()
+
+        const anyClearing = Object.values(fClearings).some(Boolean)
+        const anyCraft = Object.values(fCraft).some(Boolean)
+        const anyItem = Object.values(fItems).some(Boolean)
+
+        return CARDS.filter((c) => {
+            if (search) {
+                const okName =
+                    c.name.toLowerCase().includes(search) ||
+                    c.id.toLowerCase().includes(search)
+                if (!okName) return false
+            }
+
+            if (anyClearing && !fClearings[c.clearing]) return false
+            if (anyCraft && !fCraft[c.craftType]) return false
+
+            if (anyItem) {
+                if (!c.item) return false
+                if (!fItems[c.item]) return false
+            }
+
+            return true
+        })
+    }, [cardsSearch, fClearings, fCraft, fItems])
+
     // BLOCKING DRAFT VIEW
     if (state?.raceDraftEnabled && draft && draft.status === 'DRAFTING') {
         return (
@@ -1283,35 +1311,6 @@ export default function MatchPage() {
             />
         )
     }
-
-    const matchStarted = state?.status === 'RUNNING'
-    const filteredCards = useMemo(() => {
-        const search = cardsSearch.trim().toLowerCase()
-
-        const anyClearing = Object.values(fClearings).some(Boolean)
-        const anyCraft = Object.values(fCraft).some(Boolean)
-        const anyItem = Object.values(fItems).some(Boolean)
-
-        return CARDS.filter((c) => {
-            if (search) {
-                const okName =
-                    c.name.toLowerCase().includes(search) ||
-                    c.id.toLowerCase().includes(search)
-                if (!okName) return false
-            }
-
-            if (anyClearing && !fClearings[c.clearing]) return false
-            if (anyCraft && !fCraft[c.craftType]) return false
-
-            if (anyItem) {
-                if (!c.item) return false
-                if (!fItems[c.item]) return false
-            }
-
-            return true
-        })
-    }, [cardsSearch, fClearings, fCraft, fItems])
-
 
     const toPrev = () => {
         if (!playersInMatchOrder.length) return
