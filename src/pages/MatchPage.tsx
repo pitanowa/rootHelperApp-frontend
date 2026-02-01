@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiGet, apiPost } from '../api'
 import RaceDraftView from './RaceDraftPage'
-import { createPortal } from 'react-dom'
 import { RACE_LABEL } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
 import CardsModal from '../components/modals/CardsModal'
@@ -962,7 +961,7 @@ export default function MatchPage() {
     function resetCardFilters() {
         setCardsSearch('')
         setFClearings({ MOUSE: false, FOX: false, RABBIT: false, BIRD: false })
-        setFCraft({ POINTS: false, ABILITY: false, DOMINANCE: false})
+        setFCraft({ POINTS: false, ABILITY: false, DOMINANCE: false })
         setFItems({
             SACK: false,
             BOOT: false,
@@ -1199,18 +1198,6 @@ export default function MatchPage() {
         } catch { }
     }
 
-    async function resetTimer(playerId: number) {
-        setRunningPlayerId((prev) => (prev === playerId ? null : prev))
-        alertedRef.current[playerId] = false
-        setLocalTime((prev) => ({ ...prev, [playerId]: presetSeconds }))
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, { timeLeftSeconds: presetSeconds })
-            await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to reset timer')
-        }
-    }
-
     async function refreshTimer(playerId: number) {
         // ✅ natychmiast w UI
         setRunningPlayerId((prev) => (prev === playerId ? null : prev))
@@ -1311,17 +1298,7 @@ export default function MatchPage() {
             />
         )
     }
-
-    const toPrev = () => {
-        if (!playersInMatchOrder.length) return
-        setActiveIndex((i) => (i - 1 + playersInMatchOrder.length) % playersInMatchOrder.length)
-    }
-
-    const toNext = () => {
-        if (!playersInMatchOrder.length) return
-        setActiveIndex((i) => (i + 1) % playersInMatchOrder.length)
-    }
-
+    
     return (
         <div style={ui.page}>
             <div style={ui.shell}>
@@ -1648,12 +1625,20 @@ export default function MatchPage() {
                             </div>
                         </div>
 
-                        {/* RIGHT: SCOREBOARD (zostaje jak było) */}
+                        {/* RIGHT: SCOREBOARD*/}
                         <div style={{ display: 'grid', gap: 12 }}>
 
                             <div style={ui.panel}>
                                 <div style={ui.panelHead}>
                                     <div>Scoreboard</div>
+                                    {activePlayer && (
+                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <span style={ui.badge}>
+                                                Active: <b>{activePlayer.playerName}</b>
+                                            </span>
+
+                                        </div>
+                                    )}
                                     <span style={ui.badgeStrong('#dc2626')}>blood ledger</span>
                                 </div>
 
