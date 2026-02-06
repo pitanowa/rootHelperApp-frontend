@@ -887,6 +887,23 @@ type FlowStage = 'NONE' | 'SETUP'
 
 const LS_SETUP = (mid: number) => `rootleague:match:${mid}:setupDone`
 const LS_RACE = (mid: number) => `rootleague:match:${mid}:raceByPlayer`
+const LS_MANUAL_ORDER = (mid: number) => `rootleague:match:${mid}:manualPickOrder`
+
+function lsGetJson<T>(key: string, fallback: T): T {
+    try {
+        const raw = window.localStorage.getItem(key)
+        if (!raw) return fallback
+        return JSON.parse(raw) as T
+    } catch {
+        return fallback
+    }
+}
+function lsSetJson(key: string, val: any) {
+    window.localStorage.setItem(key, JSON.stringify(val))
+}
+function lsDel(key: string) {
+    window.localStorage.removeItem(key)
+}
 
 function lsGetRaceMap(mid: number): Record<number, string> {
     try { return JSON.parse(localStorage.getItem(LS_RACE(mid)) || '{}') } catch { return {} }
@@ -997,23 +1014,31 @@ export default function MatchPage() {
     const playersInMatchOrder = useMemo(() => {
         if (!state) return []
 
-        // If we have draft order, use reverse(ban order) as match order
-        const order = draft?.pickOrder?.length ? [...draft.pickOrder].reverse() : null
-
-        if (order) {
+        // ✅ DRAFT: zostaje jak było (reverse)
+        const draftOrder = draft?.pickOrder?.length ? [...draft.pickOrder].reverse() : null
+        if (draftOrder) {
             const byId = new Map(state.players.map((p) => [p.playerId, p]))
-            const arranged = order.map((id) => byId.get(id)).filter(Boolean) as MatchPlayerState[]
-
-            // if for some reason someone is missing from draft order, append them at the end
+            const arranged = draftOrder.map((id) => byId.get(id)).filter(Boolean) as MatchPlayerState[]
             const used = new Set(arranged.map((p) => p.playerId))
             const rest = state.players.filter((p) => !used.has(p.playerId))
-
             return [...arranged, ...rest]
         }
 
-        // fallback: keep stable (original order from backend), not by name
+        // ✅ MANUAL PICK: kolejność = kolejność przypisywania na froncie
+        if (state.raceDraftEnabled === false) {
+            const manual = [...lsGetJson<number[]>(LS_MANUAL_ORDER(mid), [])].reverse()
+            if (manual.length) {
+                const byId = new Map(state.players.map((p) => [p.playerId, p]))
+                const arranged = manual.map((id) => byId.get(id)).filter(Boolean) as MatchPlayerState[]
+                const used = new Set(arranged.map((p) => p.playerId))
+                const rest = state.players.filter((p) => !used.has(p.playerId))
+                return [...arranged, ...rest]
+            }
+        }
+
         return [...state.players]
-    }, [state, draft?.pickOrder])
+    }, [state, draft?.pickOrder, mid])
+
 
     useEffect(() => {
         if (!playersInMatchOrder.length) return
@@ -1379,6 +1404,13 @@ export default function MatchPage() {
                                 players: prev.players.map(p => p.playerId === playerId ? { ...p, race } : p),
                             }
                         })
+
+                        const key = LS_MANUAL_ORDER(mid)
+                        const order = lsGetJson<number[]>(key, [])
+                        if (!order.includes(playerId)) {
+                            order.push(playerId)
+                            lsSetJson(key, order)
+                        }
 
                         // 2) persist lokalnie (żeby inni też widzieli po refreshu)
                         lsSetRace(mid, playerId, race)

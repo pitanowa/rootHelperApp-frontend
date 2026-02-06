@@ -181,21 +181,28 @@ export default function PlayersPage() {
     }
   }
 
-  async function removePlayer(id: number) {
-    const ok = confirm('Remove this player?')
-    if (!ok) return
+async function removePlayer(id: number) {
+  const ok = confirm('Remove this player?')
+  if (!ok) return
 
-    setLoading(true)
-    setError(null)
-    try {
-      await apiDelete<void>(`/api/players/${id}`)
-      setPlayers((prev) => prev.filter((p) => p.id !== id))
-    } catch (e: any) {
+  setLoading(true)
+  setError(null)
+
+  try {
+    await apiDelete<void>(`/api/players/${id}`)
+  } catch (e: any) {
+    const status = e?.response?.status ?? e?.status
+    if (status !== 404) {
       setError(e?.message ?? 'Failed to remove player')
-    } finally {
       setLoading(false)
+      return
     }
   }
+
+  setPlayers((prev) => prev.filter((p) => p.id !== id))
+  setLoading(false)
+}
+
 
   return (
     <div style={ui.page}>

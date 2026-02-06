@@ -6,10 +6,12 @@ import type { Player } from '../types'
 type StandingRow = {
     playerId: number
     playerName: string
+    rootsTotal: number
     pointsTotal: number
     gamesPlayed: number
     wins: number
 }
+
 
 type CreatedMatch = {
     id: number
@@ -147,7 +149,7 @@ const ui = {
         marginBottom: 14,
     } as const,
 
-        list: {
+    list: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: 12,
@@ -695,7 +697,7 @@ export default function LeaguePage() {
                 apiGet<MatchListItem[]>(`/api/leagues/${lid}/matches`),
             ])
 
-            rows.sort((a, b) => b.pointsTotal - a.pointsTotal || a.playerName.localeCompare(b.playerName))
+            rows.sort((a, b) => (b.rootsTotal ?? 0) - (a.rootsTotal ?? 0) || a.playerName.localeCompare(b.playerName))
             setStandings(rows)
             setMatches(ms)
 
@@ -798,7 +800,7 @@ export default function LeaguePage() {
                     <div>
                         <h2 style={ui.standingsTitleDark}>Standings</h2>
                         <div style={ui.standingsMetaDark}>
-                            Bloodline ranking • Sorted by points
+                            Bloodline ranking • Sorted by roots
                         </div>
                     </div>
 
@@ -816,7 +818,7 @@ export default function LeaguePage() {
                                 <tr>
                                     <th style={ui.standingsThDark}>#</th>
                                     <th style={ui.standingsThDark}>Player</th>
-                                    <th style={ui.standingsThDark}>Points</th>
+                                    <th style={ui.standingsThDark}>Roots</th>
                                     <th style={ui.standingsThDark}>Games</th>
                                     <th style={ui.standingsThDark}>Wins</th>
                                 </tr>
@@ -843,6 +845,7 @@ export default function LeaguePage() {
                                     return (
                                         <tr
                                             key={r.playerId}
+                                            title={`Roots: ${r.rootsTotal} | Points: ${r.pointsTotal} | Games: ${r.gamesPlayed} | Wins: ${r.wins}`}
                                             style={{ ...ui.standingsTrBaseDark, background: baseBg }}
                                             onMouseEnter={(e) => {
                                                 e.currentTarget.style.background = 'rgba(220,38,38,0.12)'
@@ -874,7 +877,12 @@ export default function LeaguePage() {
                                             </td>
 
                                             <td style={ui.standingsTdDark}>
-                                                <span style={ui.standingsPointsDark}>{r.pointsTotal}</span>
+                                                <div style={{ display: 'grid', gap: 2 }}>
+                                                    <span style={ui.standingsPointsDark}>{r.rootsTotal} 🌿</span>
+                                                    <span style={{ fontSize: 11, opacity: 0.72, color: 'rgba(255,255,255,0.75)' }}>
+                                                        {r.pointsTotal} pts
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             <td style={ui.standingsTdDark}>

@@ -1,6 +1,6 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { apiGet } from '../api'
 import { useAppCtx } from '../AppContext'
 
@@ -25,10 +25,12 @@ type PlayerListItem = {
 type StandingRow = {
   playerId: number
   playerName: string
+  rootsTotal: number
   pointsTotal: number
   gamesPlayed: number
   wins: number
 }
+
 
 // =====================
 // Legendary Dark UI
@@ -297,6 +299,9 @@ export default function HomePage() {
   const [loadingStandings, setLoadingStandings] = useState(true)
   const [standingsError, setStandingsError] = useState<string | null>(null)
 
+  const location = useLocation()
+
+
   useEffect(() => {
     let cancelled = false
 
@@ -354,7 +359,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [location.pathname])
 
   return (
     <div style={ui.page}>
@@ -500,7 +505,7 @@ export default function HomePage() {
                       <div
                         key={r.playerId}
                         style={{ ...ui.standingsRowMini, background: baseBg }}
-                        title={`Games: ${r.gamesPlayed}, Wins: ${r.wins}`}
+                        title={`Korzenie: ${r.rootsTotal} | Punkty: ${r.pointsTotal} | Games: ${r.gamesPlayed} | Wins: ${r.wins}`}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = 'rgba(220,38,38,0.12)'
                         }}
@@ -514,7 +519,10 @@ export default function HomePage() {
                         <div style={{ fontWeight: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {r.playerName}
                         </div>
-                        <div style={{ textAlign: 'right', fontWeight: 1000, fontVariantNumeric: 'tabular-nums' }}>{r.pointsTotal}</div>
+                        <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                          <div style={{ fontWeight: 1000 }}>{r.rootsTotal} 🌿</div>
+                          <div style={{ fontSize: 11, opacity: 0.7 }}>{r.pointsTotal} pts</div>
+                        </div>
                       </div>
                     )
                   })}
