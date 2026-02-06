@@ -963,6 +963,9 @@ export default function MatchPage() {
     const [flowStage, setFlowStage] = useState<FlowStage>('NONE')
     const [setupIndex, setSetupIndex] = useState(0)
 
+    const [scoreInput, setScoreInput] = useState<Record<number, string>>({})
+
+
     // ✅ Cards modal
     const [cardsOpen, setCardsOpen] = useState(false)
     const [cardsSearch, setCardsSearch] = useState('')
@@ -1058,6 +1061,14 @@ export default function MatchPage() {
         try {
             const s = await apiGet<MatchState>(`/api/matches/${mid}`)
             setState(s)
+            setScoreInput((prev) => {
+                const next = { ...prev }
+                for (const p of s.players) {
+                    if (next[p.playerId] === undefined) next[p.playerId] = String(p.score ?? 0)
+                }
+                return next
+            })
+
             const raceMap = lsGetRaceMap(mid)
             setState(prev => {
                 if (!prev) return prev
@@ -1275,6 +1286,14 @@ export default function MatchPage() {
             await load()
         } catch { }
     }
+
+    async function setScoreAbsolute(playerId: number, targetScore: number) {
+        const current = state?.players.find((p) => p.playerId === playerId)?.score ?? 0
+        const delta = targetScore - current
+        if (delta === 0) return
+        await scoreDelta(playerId, delta)
+    }
+
 
     async function refreshTimer(playerId: number) {
         // ✅ natychmiast w UI
@@ -1729,24 +1748,50 @@ export default function MatchPage() {
                                                     </div>
                                                 </div>
 
-
                                                 {/* ACTIONS */}
                                                 <div style={ui.miniActionsRow}>
                                                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                                        <button
-                                                            onClick={() => scoreDelta(p.playerId, -1)}
+                                                        <input
+                                                            type="number"
+                                                            value={scoreInput[p.playerId] ?? String(p.score ?? 0)}
                                                             disabled={loading || !matchStarted}
-                                                            style={ui.btn('ghost', loading || !matchStarted)}
-                                                        >
-                                                            −1
-                                                        </button>
+                                                            onChange={(e) =>
+                                                                setScoreInput((prev) => ({ ...prev, [p.playerId]: e.target.value }))
+                                                            }
+                                                            onKeyDown={async (e) => {
+                                                                if (e.key !== 'Enter') return
+                                                                const raw = (scoreInput[p.playerId] ?? '').trim()
+                                                                if (raw === '') return
+                                                                const n = Number(raw)
+                                                                if (!Number.isFinite(n)) return
+                                                                await setScoreAbsolute(p.playerId, Math.trunc(n))
+                                                            }}
+                                                            style={{
+                                                                width: 80,
+                                                                padding: '10px 12px',
+                                                                borderRadius: 14,
+                                                                border: '1px solid rgba(255,255,255,0.14)',
+                                                                background: 'rgba(255,255,255,0.06)',
+                                                                color: 'rgba(255,255,255,0.92)',
+                                                                outline: 'none',
+                                                                fontWeight: 900,
+                                                                fontVariantNumeric: 'tabular-nums',
+                                                            }}
+                                                            title="Wpisz docelowy wynik i naciśnij Enter"
+                                                        />
 
                                                         <button
-                                                            onClick={() => scoreDelta(p.playerId, +1)}
+                                                            onClick={async () => {
+                                                                const raw = (scoreInput[p.playerId] ?? '').trim()
+                                                                if (raw === '') return
+                                                                const n = Number(raw)
+                                                                if (!Number.isFinite(n)) return
+                                                                await setScoreAbsolute(p.playerId, Math.trunc(n))
+                                                            }}
                                                             disabled={loading || !matchStarted}
                                                             style={ui.btn('ghost', loading || !matchStarted)}
                                                         >
-                                                            +1
+                                                            Set
                                                         </button>
 
                                                         <button
@@ -1797,13 +1842,12 @@ export default function MatchPage() {
                                     <div>Scoreboard</div>
                                     {activePlayer && (
                                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                                            <span style={ui.badge}>
+                                            <span style={ui.badgeStrong('#dc2626')}>
                                                 Active: <b>{activePlayer.playerName}</b>
                                             </span>
 
                                         </div>
                                     )}
-                                    <span style={ui.badgeStrong('#dc2626')}>blood ledger</span>
                                 </div>
 
                                 <div style={ui.tableHeadRow}>

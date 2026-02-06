@@ -26,7 +26,9 @@ type MatchListItem = {
     status: string
     timerSecondsInitial: number
     ranked: boolean
+    name?: string | null
 }
+
 
 // --- MODERN INLINE STYLES (drop-in) ---
 const ui = {
@@ -490,6 +492,7 @@ const ui = {
             color: 'rgba(255,255,255,0.92)',
             fontWeight: 1000,
             cursor: disabled ? 'not-allowed' : 'pointer',
+            pointerEvents: disabled ? 'none' : 'auto',
             opacity: disabled ? 0.55 : 1,
             boxShadow:
                 variant === 'danger'
@@ -738,6 +741,19 @@ export default function LeaguePage() {
         }
     }
 
+    async function saveMatchName(matchId: number, name: string) {
+        setLoading(true)
+        setError(null)
+        try {
+            await apiPost<void>(`/api/matches/${matchId}/name`, { name })
+            await load()
+        } catch (e: any) {
+            setError(e?.message ?? 'Failed to set match name')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     useEffect(() => {
         if (!Number.isFinite(lid)) return
         load()
@@ -770,6 +786,12 @@ export default function LeaguePage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    function matchTitle(m: MatchListItem) {
+        const mode = m.ranked ? 'RANKED' : 'CASUAL'
+        const icon = m.status === 'FINISHED' ? '✅' : m.status === 'DRAFT' ? '🧪' : '⚔️'
+        return `${icon} Match #${m.id} • ${mode} • ${m.timerSecondsInitial}s`
     }
 
     return (
@@ -991,10 +1013,7 @@ export default function LeaguePage() {
                             disabled={loading}
                             style={ui.checkbox}
                         />
-                        <span style={{ fontWeight: 900 }}>Race draft</span>
-                        <span style={{ fontSize: 12, opacity: 0.7 }}>
-                            before match
-                        </span>
+                        <span style={{ fontWeight: 900 }}>Draft</span>
                     </label>
 
                     {/* Create */}
@@ -1102,7 +1121,9 @@ export default function LeaguePage() {
                                 >
                                     <div style={ui.matchLeft}>
                                         <div style={ui.matchTopLine}>
-                                            <span style={ui.matchId}>Match #{m.id}</span>
+                                            <span style={ui.matchId}>
+                                                {m.name && m.name.trim() ? m.name : `Match #${m.id}`}
+                                            </span>
                                             <span style={ui.statusChip(m.status)}>
                                                 {m.status === 'FINISHED' ? '✅' : m.status === 'DRAFT' ? '🧪' : '⚔️'} {m.status}
                                             </span>
@@ -1134,10 +1155,11 @@ export default function LeaguePage() {
                                             ⚔️ Open
                                         </Link>
 
+                                        {/* ✅ Toggle ranked/casual — zawsze widoczne */}
                                         <button
-                                            onClick={() => deleteMatch(m.id)}
+                                            onClick={() => updateMatchRanked(m.id, !m.ranked)}
                                             disabled={disabled}
-                                            style={ui.linkBtn('danger', disabled)}
+                                            style={ui.linkBtn('ghost', disabled)}
                                             onMouseEnter={(e) => {
                                                 if (disabled) return
                                                 e.currentTarget.style.transform = 'translateY(-1px)'
@@ -1146,26 +1168,40 @@ export default function LeaguePage() {
                                                 e.currentTarget.style.transform = 'translateY(0)'
                                             }}
                                         >
-                                            🩸 Delete
+                                            🔁 Set {m.ranked ? 'CASUAL' : 'RANKED'}
                                         </button>
 
-                                        {isDraft && (
-                                            <button
-                                                onClick={() => updateMatchRanked(m.id, !m.ranked)}
-                                                disabled={disabled}
-                                                style={ui.linkBtn('ghost', disabled)}
-                                                onMouseEnter={(e) => {
-                                                    if (disabled) return
-                                                    e.currentTarget.style.transform = 'translateY(-1px)'
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.transform = 'translateY(0)'
-                                                }}
-                                            >
-                                                🔁 Set {m.ranked ? 'CASUAL' : 'RANKED'}
-                                            </button>
-                                        )}
+                                        {/* ✅ Rename (Twoje) */}
+                                        <button
+                                            disabled={disabled}
+                                            style={ui.linkBtn('ghost', disabled)}
+                                            onClick={async () => {
+                                                const next = prompt('Match name:', m.name ?? '')
+                                                if (next === null) return
+                                                await saveMatchName(m.id, next)
+                                            }}
+                                        >
+                                            ✏️ Rename
+                                        </button>
+
+                                        {/* ✅ Delete — tylko gdy CASUAL */}
+                                        <button
+                                            onClick={() => deleteMatch(m.id)}
+                                            disabled={disabled || m.ranked}
+                                            title={m.ranked ? 'Cannot delete RANKED match. Set it to CASUAL first.' : undefined}
+                                            style={ui.linkBtn('danger', disabled || m.ranked)}
+                                            onMouseEnter={(e) => {
+                                                if (disabled || m.ranked) return
+                                                e.currentTarget.style.transform = 'translateY(-1px)'
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.transform = 'translateY(0)'
+                                            }}
+                                        >
+                                            🩸 Delete
+                                        </button>
                                     </div>
+
                                 </div>
                             )
                         })}
