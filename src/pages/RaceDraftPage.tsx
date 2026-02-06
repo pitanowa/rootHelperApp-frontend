@@ -405,6 +405,8 @@ export default function RaceDraftView({
   const totalPlayers = players.length
   const drawCount = totalPlayers + 1
   const maxBans = Math.max(0, ALL_RACES.length - drawCount)
+  const maxVagabondCopies = totalPlayers === 6 ? 2 : 1
+  const canBanSecondVagabond = maxVagabondCopies === 2
 
   const [localBans, setLocalBans] = useState<string[]>(draft.bannedRaces ?? [])
 
@@ -461,6 +463,7 @@ export default function RaceDraftView({
     if (draft.status !== 'DRAFTING') return
 
     if (race === VAGABOND) {
+      // <6 graczy → max 1 Vagabond
       if (vagabondBanCount > 0) {
         const idx = localBans.findIndex((r) => r === VAGABOND)
         if (idx >= 0) {
@@ -485,6 +488,7 @@ export default function RaceDraftView({
   }
 
   function addSecondVagabondBan() {
+    if (!canBanSecondVagabond) return
     if (draft.phase !== 'BAN') return
     if (draft.status !== 'DRAFTING') return
     if (!canAddMoreBans) return
@@ -664,19 +668,26 @@ export default function RaceDraftView({
                     }}
                   >
                     <img src={RACE_ICON[race]} alt={race} style={ui.icon32} />
-                    {isVaga && <span style={{ fontSize: 12, fontWeight: 1000 }}>{vagabondBanCount}/2</span>}
+                    {isVaga && (
+                      <span style={{ fontSize: 12, fontWeight: 1000 }}>
+                        {vagabondBanCount}/{maxVagabondCopies}
+                      </span>
+                    )}
                   </button>
                 )
               })}
 
-              <button
-                onClick={addSecondVagabondBan}
-                disabled={loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2}
-                style={ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2)}
-                title="Add second VAGABOND ban (ban 2 of 2 copies)"
-              >
-                🗡️ +1 VAGABOND ban
-              </button>
+              {canBanSecondVagabond && (
+                <button
+                  onClick={addSecondVagabondBan}
+                  disabled={loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2}
+                  style={ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2)}
+                  title="Add second VAGABOND ban (ban 2 of 2 copies)"
+                >
+                  🗡️ +1 VAGABOND ban
+                </button>
+              )}
+
             </div>
 
             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
