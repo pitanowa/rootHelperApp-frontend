@@ -5,6 +5,7 @@ import RaceDraftView from './RaceDraftPage'
 import { RACE_LABEL } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
 import CardsModal from '../components/modals/CardsModal'
+import RacePickView from './RacePickPage'
 
 
 // ✅ adjust these imports to your actual icon paths
@@ -885,6 +886,19 @@ function playAlarm() {
 type FlowStage = 'NONE' | 'SETUP'
 
 const LS_SETUP = (mid: number) => `rootleague:match:${mid}:setupDone`
+const LS_RACE = (mid: number) => `rootleague:match:${mid}:raceByPlayer`
+
+function lsGetRaceMap(mid: number): Record<number, string> {
+    try { return JSON.parse(localStorage.getItem(LS_RACE(mid)) || '{}') } catch { return {} }
+}
+function lsSetRace(mid: number, playerId: number, race: string) {
+    const map = lsGetRaceMap(mid)
+    map[playerId] = race
+    localStorage.setItem(LS_RACE(mid), JSON.stringify(map))
+}
+function lsClearRaces(mid: number) {
+    localStorage.removeItem(LS_RACE(mid))
+}
 
 function lsGetBool(key: string) {
     return window.localStorage.getItem(key) === '1'
@@ -1019,6 +1033,17 @@ export default function MatchPage() {
         try {
             const s = await apiGet<MatchState>(`/api/matches/${mid}`)
             setState(s)
+            const raceMap = lsGetRaceMap(mid)
+            setState(prev => {
+                if (!prev) return prev
+                return {
+                    ...prev,
+                    players: prev.players.map(p => ({
+                        ...p,
+                        race: raceMap[p.playerId] ?? p.race ?? null,
+                    })),
+                }
+            })
 
             setLocalTime((prev) => {
                 const next = { ...prev }
@@ -1112,7 +1137,35 @@ export default function MatchPage() {
         prevDraftStatusRef.current = draft.status
     }, [draft, mid])
 
+    useEffect(() => {
+        if (!state) return
+        if (state.raceDraftEnabled) return
+        if (lsGetBool(LS_SETUP(mid))) return
 
+        const allPicked = state.players.every((p) => !!p.race)
+        if (allPicked) {
+            setSetupIndex(0)
+            setFlowStage('SETUP')
+        }
+    }, [state, mid])
+
+    useEffect(() => {
+        if (!state) return
+        if (state.raceDraftEnabled) return
+        if (state.status !== 'DRAFT') return
+
+        const allPicked = state.players.every((p) => !!p.race)
+        if (!allPicked) return
+
+            ; (async () => {
+                try {
+                    await apiPost<void>(`/api/matches/${mid}/start`)
+                    await load()
+                } catch (e: any) {
+                    setError(e?.message ?? 'Failed to start match')
+                }
+            })()
+    }, [state, mid])
 
     async function startMatch() {
         setLoading(true)
@@ -1298,7 +1351,86 @@ export default function MatchPage() {
             />
         )
     }
-    
+
+    const needsRacePick =
+        state &&
+        state.raceDraftEnabled === false &&
+        state.players.some((p) => !p.race)
+
+    if (needsRacePick) {
+        return (
+            <RacePickView
+                matchId={mid}
+                players={state!.players}
+                loading={loading}
+                error={error}
+                raceKey={raceKey}
+                raceLabel={raceLabel}
+                RACE_ICON={RACE_ICON}
+                RACE_COLOR={RACE_COLOR}
+                ui={ui}
+                onPick={async (playerId, race) => {
+                    try {
+                        // 1) optimistic UI
+                        setState(prev => {
+                            if (!prev) return prev
+                            return {
+                                ...prev,
+                                players: prev.players.map(p => p.playerId === playerId ? { ...p, race } : p),
+                            }
+                        })
+
+                        // 2) persist lokalnie (żeby inni też widzieli po refreshu)
+                        lsSetRace(mid, playerId, race)
+
+                        // 3) backend
+                        await apiPost(`/api/matches/${mid}/race-pick`, { playerId, race })
+
+                        // 4) jeśli ostatni pick -> zamknij pick view
+                        const allPickedNow =
+                            (state?.players ?? []).every(p => p.playerId === playerId ? true : !!(p.race || lsGetRaceMap(mid)[p.playerId]))
+
+                        if (allPickedNow) {
+                            await load() // żeby odświeżyć match status itp.
+                            // widok sam przejdzie, bo needsRacePick będzie false
+                            return
+                        }
+
+                        await load()
+                    } catch (e: any) {
+                        setError(e?.message ?? 'Failed to pick race')
+                    }
+                }}
+
+                onRefresh={async () => {
+                    try {
+                        // 1) lokalnie wyczyść cache
+                        lsClearRaces(mid)
+
+                        // 2) wyczyść UI
+                        setState(prev => {
+                            if (!prev) return prev
+                            return {
+                                ...prev,
+                                players: prev.players.map(p => ({ ...p, race: null })),
+                            }
+                        })
+
+                        // 3) backend reset
+                        await apiPost(`/api/matches/${mid}/race-pick/reset`)
+
+                        // 4) reload
+                        await load()
+                    } catch (e: any) {
+                        setError(e?.message ?? 'Failed to reset race picks')
+                    }
+                }}
+
+
+            />
+        )
+    }
+
     return (
         <div style={ui.page}>
             <div style={ui.shell}>
