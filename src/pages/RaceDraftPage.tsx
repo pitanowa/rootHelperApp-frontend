@@ -24,6 +24,17 @@ const RACE_ICON: Record<string, string> = {
   RATS: rats,
 }
 
+const LANDMARKS = [
+  { id: 'lost_city', label: 'Lost City' },
+  { id: 'black_market', label: 'Black Market' },
+  { id: 'legendary_forge', label: 'Legendary Forge' },
+  { id: 'tower', label: 'The Tower' },
+  { id: 'ferry', label: 'Ferry' },
+  { id: 'bandit_gangs', label: 'Bandit Gangs' },
+] as const
+
+type LandmarkId = (typeof LANDMARKS)[number]['id']
+
 // kanoniczna lista ras (musi się zgadzać z backendem)
 const ALL_RACES = Object.keys(RACE_ICON)
 const VAGABOND = 'VAGABOND'
@@ -385,6 +396,12 @@ export default function RaceDraftView({
   onSetBans,
   onRefresh,
   onResetPick,
+  landmarksEnabled,
+  landmarksBanned,
+  landmarksRandomCount,
+  landmarksDrawn,
+  onLandmarksBan,
+
 }: {
   matchId: number
   draft: DraftState
@@ -395,6 +412,13 @@ export default function RaceDraftView({
   onSetBans?: (bans: string[]) => void | Promise<void>
   onRefresh?: () => void
   onResetPick?: () => Promise<any>
+  landmarksEnabled?: boolean
+  landmarksBanned?: string | null
+  landmarksRandomCount?: number | null
+  landmarksDrawn?: string[]
+  onLandmarksBan?: (banned: string, randomCount: 1 | 2) => void | Promise<void>
+
+
 }) {
   const playersById = useMemo(() => {
     const m = new Map<number, MatchPlayerState>()
@@ -409,6 +433,13 @@ export default function RaceDraftView({
   const canBanSecondVagabond = maxVagabondCopies === 2
 
   const [localBans, setLocalBans] = useState<string[]>(draft.bannedRaces ?? [])
+  const [localLandmarkBanned, setLocalLandmarkBanned] = useState<string>('')
+  const [localLandmarkRandomCount, setLocalLandmarkRandomCount] = useState<1 | 2>(1)
+
+  useEffect(() => {
+    if (landmarksBanned) setLocalLandmarkBanned(landmarksBanned)
+    if (landmarksRandomCount === 1 || landmarksRandomCount === 2) setLocalLandmarkRandomCount(landmarksRandomCount)
+  }, [landmarksBanned, landmarksRandomCount])
 
   useEffect(() => {
     setLocalBans(draft.bannedRaces ?? [])
@@ -690,6 +721,103 @@ export default function RaceDraftView({
 
             </div>
 
+            {/* LANDMARKS (BAN PHASE) */}
+            {landmarksEnabled && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+                <div style={ui.cardHeader}>
+                  <div>
+                    <h2 style={ui.h2}>Landmarks</h2>
+                    <div style={ui.sub}>Select 1 landmark to exclude from random draw, then choose how many to draw.</div>
+                  </div>
+
+                  <div style={ui.rightBadges}>
+                    {landmarksBanned && landmarksDrawn?.length ? (
+                      <Badge variant="ok" text={`Locked: ${landmarksBanned} • draw ${landmarksDrawn.length}`} />
+                    ) : (
+                      <Badge variant="ghost" text="Not set" />
+                    )}
+                  </div>
+                </div>
+
+                {/* pick banned landmark */}
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {LANDMARKS.map((lm) => {
+                    const picked = localLandmarkBanned === lm.id
+                    const disabled = loading || draft.status !== 'DRAFTING'
+
+                    return (
+                      <button
+                        key={lm.id}
+                        disabled={disabled}
+                        onClick={() => setLocalLandmarkBanned(lm.id)}
+                        style={ui.raceTile(picked ? 'banned' : 'neutral', disabled)}
+                        title={lm.label}
+                      >
+                        {picked ? '🚫' : '🏷️'} {lm.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* choose random count */}
+                <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={ui.sub}>Random draw:</span>
+
+                  <button
+                    disabled={loading || draft.status !== 'DRAFTING'}
+                    onClick={() => setLocalLandmarkRandomCount(1)}
+                    style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}
+                  >
+                    {localLandmarkRandomCount === 1 ? '✅ ' : ''}1 landmark
+                  </button>
+
+                  <button
+                    disabled={loading || draft.status !== 'DRAFTING'}
+                    onClick={() => setLocalLandmarkRandomCount(2)}
+                    style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}
+                  >
+                    {localLandmarkRandomCount === 2 ? '✅ ' : ''}2 landmarks
+                  </button>
+
+                  <div style={{ marginLeft: 'auto' }}>
+                    <button
+                      onClick={async () => {
+                        if (!onLandmarksBan) return
+                        if (!localLandmarkBanned) return
+                        await onLandmarksBan(localLandmarkBanned, localLandmarkRandomCount)
+                        onRefresh?.()
+                      }}
+                      disabled={
+                        loading ||
+                        draft.status !== 'DRAFTING' ||
+                        !onLandmarksBan ||
+                        !localLandmarkBanned ||
+                        !!(landmarksBanned && (landmarksDrawn?.length ?? 0) > 0)
+                      }
+                      style={ui.btn('gold', loading || draft.status !== 'DRAFTING' || !onLandmarksBan || !localLandmarkBanned)}
+                      title={
+                        landmarksBanned && (landmarksDrawn?.length ?? 0) > 0
+                          ? 'Landmarks already locked for this match'
+                          : !localLandmarkBanned
+                            ? 'Select a landmark to ban first'
+                            : ''
+                      }
+                    >
+                      🏷️ Confirm landmarks
+                    </button>
+                  </div>
+                </div>
+
+                {localLandmarkBanned ? (
+                  <div style={ui.hint}>
+                    Banned: <b>{localLandmarkBanned}</b> • Will randomly draw <b>{localLandmarkRandomCount}</b> from remaining.
+                  </div>
+                ) : (
+                  <div style={ui.hint}>Pick exactly one landmark above to exclude it from the draw.</div>
+                )}
+              </div>
+            )}
+
             <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <div style={ui.sub}>Selected bans are sent as a list. VAGABOND can appear twice to ban both copies.</div>
 
@@ -708,6 +836,35 @@ export default function RaceDraftView({
         {/* PICK PHASE */}
         {draft.phase === 'PICK' && (
           <>
+            {landmarksEnabled && (
+              <div style={ui.card}>
+                <div style={ui.cardHeader}>
+                  <div>
+                    <h2 style={ui.h2}>Landmarks drawn</h2>
+                    <div style={ui.sub}>
+                      Banned: <b>{landmarksBanned ?? '—'}</b> • Draw count: <b>{landmarksDrawn?.length ?? landmarksRandomCount ?? '—'}</b>
+                    </div>
+                  </div>
+                  <div style={ui.rightBadges}>
+                    <Badge variant="info" text={`Drawn: ${(landmarksDrawn ?? []).length}`} />
+                  </div>
+                </div>
+
+                {(landmarksDrawn ?? []).length === 0 ? (
+                  <div style={ui.sub}>Not drawn yet.</div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {landmarksDrawn!.map((id) => (
+                      <span key={id} style={ui.badge('ghost')}>
+                        🏷️ {id}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+
             <div style={ui.card}>
               <div style={ui.cardHeader}>
                 <div>

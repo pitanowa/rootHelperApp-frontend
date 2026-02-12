@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { LANDMARKS, lmLabel, lmDesc, type LandmarkId } from '../data/landmarks'
+import Tooltip from '../components/Tooltip'
 
 type MatchPlayerState = {
   playerId: number
@@ -21,6 +23,11 @@ type Props = {
   RACE_ICON: Record<string, string>
   RACE_COLOR: Record<string, string>
   ui: any
+  landmarksEnabled?: boolean
+  landmarkBanned?: string | null
+  landmarksRandomCount?: number | null
+  landmarksDrawn?: string[]
+  onSetLandmarksManual?: (picked: LandmarkId[]) => void | Promise<void>
 }
 
 export default function RacePickView(props: Props) {
@@ -35,9 +42,29 @@ export default function RacePickView(props: Props) {
     RACE_ICON,
     RACE_COLOR,
     ui,
+
+    landmarksEnabled,
+    landmarkBanned,
+    landmarksDrawn,
+    landmarksRandomCount,
+    onSetLandmarksManual,
   } = props
 
   const [selectedPlayerId, setSelectedPlayerId] = useState<number>(() => players[0]?.playerId ?? 0)
+  const [localPickedLandmarks, setLocalPickedLandmarks] = useState<LandmarkId[]>(() => {
+    const drawn = (landmarksDrawn ?? []).filter((x): x is LandmarkId =>
+      LANDMARKS.some((l) => l.id === x)
+    )
+    return drawn.slice(0, 2)
+  })
+
+  function toggleLandmark(id: LandmarkId) {
+    setLocalPickedLandmarks((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (prev.length >= 2) return prev // max 2
+      return [...prev, id]
+    })
+  }
 
   const taken = useMemo(() => {
     const s = new Set<string>()
@@ -87,6 +114,140 @@ export default function RacePickView(props: Props) {
             })}
           </div>
         </div>
+
+        {landmarksEnabled && (
+          <div style={{ ...ui.card, marginTop: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontWeight: 1000, letterSpacing: 0.2 }}>🏷️ Landmarks</div>
+                <div style={{ opacity: 0.78, fontSize: 13, marginTop: 4 }}>
+                  Banned: <b>{landmarkBanned ?? '—'}</b> • Draw: <b>{(landmarksDrawn?.length ?? 0) || landmarksRandomCount || '—'}</b>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {(landmarksDrawn ?? []).length === 0 ? (
+                  <span style={ui.badge}>Not drawn yet</span>
+                ) : (
+                  landmarksDrawn!.map((id) => (
+                    <Tooltip
+                      placement="bottom"
+                      content={
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
+                            {lmLabel(id)}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
+                            {lmDesc(id)}
+                          </div>
+                        </div>
+                      }
+                    >
+                      <span style={{ ...ui.badge, cursor: 'help' }}>
+                        🏷️ {lmLabel(id)}
+                      </span>
+                    </Tooltip>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {landmarksEnabled && (
+          <div style={{ ...ui.card, marginTop: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontWeight: 1000, letterSpacing: 0.2 }}>🏷️ Choose 1-2 landmarks (manual)</div>
+                <div style={{ opacity: 0.78, fontSize: 13, marginTop: 4 }}>
+                  Picked: <b>{localPickedLandmarks.length}/2</b>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <button
+                  disabled={loading || (landmarksDrawn?.length ?? 0) > 0}
+                  onClick={() => setLocalPickedLandmarks([])}
+                  style={ui.btn('ghost', loading || (landmarksDrawn?.length ?? 0) > 0)}
+                  title={(landmarksDrawn?.length ?? 0) > 0 ? 'Already locked' : 'Clear selection'}
+                >
+                  🧹 Clear
+                </button>
+
+                <button
+                  disabled={
+                    loading ||
+                    !onSetLandmarksManual ||
+                    localPickedLandmarks.length === 0 ||
+                    (landmarksDrawn?.length ?? 0) > 0
+                  }
+                  onClick={async () => {
+                    if (!onSetLandmarksManual) return
+                    if (localPickedLandmarks.length === 0) return
+                    await onSetLandmarksManual(localPickedLandmarks)
+                  }}
+                  style={ui.btn(
+                    'primary',
+                    loading ||
+                    !onSetLandmarksManual ||
+                    localPickedLandmarks.length < 1 ||
+                    localPickedLandmarks.length > 2 ||
+                    (landmarksDrawn?.length ?? 0) > 0
+                  )}
+                  title={
+                    (landmarksDrawn?.length ?? 0) > 0
+                      ? 'Already locked'
+                      : localPickedLandmarks.length < 1
+                        ? 'Pick at least 1 landmark'
+                        : ''
+                  }
+                >
+                  ✅ Confirm landmarks
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {LANDMARKS.map((lm) => {
+                const picked = localPickedLandmarks.includes(lm.id)
+                const alreadyLocked = (landmarksDrawn?.length ?? 0) > 0
+                const disabled =
+                  loading ||
+                  alreadyLocked ||
+                  (!picked && localPickedLandmarks.length >= 2)
+
+                return (
+                  <Tooltip
+                    placement="top"
+                    content={
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
+                          {lm.label}
+                        </div>
+                        <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
+                          {lm.desc}
+                        </div>
+                      </div>
+                    }
+                    disabled={loading || alreadyLocked}
+                  >
+                    <button
+                      disabled={disabled}
+                      onClick={() => toggleLandmark(lm.id)}
+                      style={ui.btn(picked ? 'primary' : 'ghost', disabled)}
+                    >
+                      {picked ? '✅' : '🏷️'} {lm.label}
+                    </button>
+                  </Tooltip>
+                )
+              })}
+            </div>
+
+            <div style={{ opacity: 0.78, fontSize: 13, marginTop: 10 }}>
+              After confirmation, landmarks are locked for this match.
+            </div>
+          </div>
+        )}
+
 
         {error && <div style={ui.errorBox}>Error: {error}</div>}
 
@@ -153,7 +314,10 @@ export default function RacePickView(props: Props) {
           </div>
 
           <div style={{ opacity: 0.78, fontSize: 13 }}>
-            Select a player, then pick a race. Once both players have a race, you will automatically enter the match view.
+            Select a player, then pick a race.
+            {landmarksEnabled && (landmarksDrawn?.length ?? 0) === 0
+              ? ' Landmarks are required before the match can start.'
+              : ' Once both players have a race, you will automatically enter the match view.'}
           </div>
         </div>
       </div>

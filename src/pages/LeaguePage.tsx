@@ -679,6 +679,7 @@ export default function LeaguePage() {
     const [timerSeconds, setTimerSeconds] = useState(180)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [landmarksEnabled, setLandmarksEnabled] = useState(false)
     const [raceDraftEnabled, setRaceDraftEnabled] = useState(false)
     const [excludedRaces, setExcludedRaces] = useState<string[]>([])
 
@@ -779,6 +780,7 @@ export default function LeaguePage() {
                 ranked,
                 raceDraftEnabled,
                 excludedRaces: raceDraftEnabled ? excludedRaces : [],
+                landmarksEnabled,
             })
             nav(`/matches/${match.id}`)
         } catch (e: any) {
@@ -1003,6 +1005,18 @@ export default function LeaguePage() {
                             CASUAL
                         </button>
                     </div>
+
+                    {/* Landmarks */}
+                    <label style={ui.switch} title="Enable Landmarks setup flow">
+                        <input
+                            type="checkbox"
+                            checked={landmarksEnabled}
+                            onChange={(e) => setLandmarksEnabled(e.target.checked)}
+                            disabled={loading}
+                            style={ui.checkbox}
+                        />
+                        <span style={{ fontWeight: 900 }}>Landmarks</span>
+                    </label>
 
                     {/* Race draft */}
                     <label style={ui.switch}>

@@ -6,6 +6,8 @@ import { RACE_LABEL } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
 import CardsModal from '../components/modals/CardsModal'
 import RacePickView from './RacePickPage'
+import { lmLabel, lmDesc } from '../data/landmarks'
+import Tooltip from '../components/Tooltip'
 
 
 // ✅ adjust these imports to your actual icon paths
@@ -37,7 +39,12 @@ type MatchState = {
     timerSecondsInitial: number
     raceDraftEnabled?: boolean
     players: MatchPlayerState[]
+    landmarksEnabled?: boolean
+    landmarkBanned?: string | null
+    landmarksRandomCount?: number | null
+    landmarksDrawn?: string[]
 }
+
 
 type DraftAssignment = {
     playerId: number
@@ -78,6 +85,12 @@ function readableTextOn(hex: string) {
     return lum > 0.62 ? '#0b0b0f' : 'rgba(255,255,255,0.92)'
 }
 
+type LandmarksStateResponse = {
+    enabled: boolean
+    banned: string | null
+    randomCount: number | null
+    drawn: string[]
+}
 
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'race'
 
@@ -1060,7 +1073,19 @@ export default function MatchPage() {
 
         try {
             const s = await apiGet<MatchState>(`/api/matches/${mid}`)
-            setState(s)
+
+            // ✅ zbuduj nextState na bazie tego co przyszło z backendu (s), a nie na bazie "prev"
+            const raceMap = lsGetRaceMap(mid)
+
+            let nextState: MatchState = {
+                ...s,
+                players: s.players.map((p) => ({
+                    ...p,
+                    race: raceMap[p.playerId] ?? p.race ?? null,
+                })),
+            }
+
+            // score input
             setScoreInput((prev) => {
                 const next = { ...prev }
                 for (const p of s.players) {
@@ -1069,18 +1094,7 @@ export default function MatchPage() {
                 return next
             })
 
-            const raceMap = lsGetRaceMap(mid)
-            setState(prev => {
-                if (!prev) return prev
-                return {
-                    ...prev,
-                    players: prev.players.map(p => ({
-                        ...p,
-                        race: raceMap[p.playerId] ?? p.race ?? null,
-                    })),
-                }
-            })
-
+            // local time
             setLocalTime((prev) => {
                 const next = { ...prev }
                 for (const p of s.players) {
@@ -1095,22 +1109,22 @@ export default function MatchPage() {
                     setDraft(d)
 
                     const raceByPlayerId = new Map(d.assignments.map((a) => [a.playerId, a.race]))
-                    setState((prev) => {
-                        if (!prev) return prev
-                        return {
-                            ...prev,
-                            players: prev.players.map((p) => ({
-                                ...p,
-                                race: p.race ?? raceByPlayerId.get(p.playerId) ?? null,
-                            })),
-                        }
-                    })
+                    nextState = {
+                        ...nextState,
+                        players: nextState.players.map((p) => ({
+                            ...p,
+                            race: p.race ?? raceByPlayerId.get(p.playerId) ?? null,
+                        })),
+                    }
                 } catch {
                     setDraft(null)
                 }
             } else {
                 setDraft(null)
             }
+
+            setState(nextState)
+
         } catch (e: any) {
             setError(e?.message ?? 'Failed to load match')
         } finally {
@@ -1193,6 +1207,11 @@ export default function MatchPage() {
         const allPicked = state.players.every((p) => !!p.race)
         if (!allPicked) return
 
+        const landmarksRequired = !!state.landmarksEnabled
+        const landmarksOk = (state.landmarksDrawn?.length ?? 0) > 0
+
+        if (landmarksRequired && !landmarksOk) return
+
             ; (async () => {
                 try {
                     await apiPost<void>(`/api/matches/${mid}/start`)
@@ -1202,6 +1221,7 @@ export default function MatchPage() {
                 }
             })()
     }, [state, mid])
+
 
     async function startMatch() {
         setLoading(true)
@@ -1374,6 +1394,14 @@ export default function MatchPage() {
                 players={state.players}
                 loading={loading}
                 error={error}
+                landmarksEnabled={state.landmarksEnabled}
+                landmarksBanned={state.landmarkBanned}
+                landmarksRandomCount={(state.landmarksRandomCount ?? null) as any}
+                landmarksDrawn={state.landmarksDrawn ?? []}
+                onLandmarksBan={async (banned, randomCount) => {
+                    await apiPost(`/api/matches/${mid}/landmarks/ban`, { banned, randomCount })
+                    await load()
+                }}
                 onPick={async (playerId, race) => {
                     try {
                         await apiPost(`/api/matches/${mid}/draft/pick`, { playerId, race })
@@ -1413,6 +1441,31 @@ export default function MatchPage() {
                 RACE_ICON={RACE_ICON}
                 RACE_COLOR={RACE_COLOR}
                 ui={ui}
+                landmarksEnabled={state?.landmarksEnabled}
+                landmarkBanned={state?.landmarkBanned}
+                landmarksRandomCount={state?.landmarksRandomCount}
+                landmarksDrawn={state?.landmarksDrawn ?? []}
+                onSetLandmarksManual={async (picked) => {
+                    try {
+                        const resp = await apiPost<LandmarksStateResponse>(`/api/matches/${mid}/landmarks/manual`, { picked })
+                        console.log('landmarks/manual resp', resp)
+
+                        setState((prev) => {
+                            if (!prev) return prev
+                            return {
+                                ...prev,
+                                landmarkBanned: resp.banned ?? null,
+                                landmarksRandomCount: resp.randomCount ?? null,
+                                landmarksDrawn: resp.drawn ?? [],
+                            }
+                        })
+
+                        await load()
+                    } catch (e: any) {
+                        setError(e?.message ?? 'Failed to set landmarks')
+                    }
+                }}
+
                 onPick={async (playerId, race) => {
                     try {
                         // 1) optimistic UI
@@ -1476,8 +1529,6 @@ export default function MatchPage() {
                         setError(e?.message ?? 'Failed to reset race picks')
                     }
                 }}
-
-
             />
         )
     }
@@ -1534,6 +1585,44 @@ export default function MatchPage() {
                     />
 
                 </div>
+
+                {state?.landmarksEnabled && (
+                    <div style={{ ...ui.panel, margin: '0 auto 14px' }}>
+                        <div style={ui.panelHead}>
+                            <div>🏷️ Landmarks</div>
+                            <span style={ui.badge}>
+                                banned: <b>{state.landmarkBanned ?? '—'}</b> • draw:{' '}
+                                <b>{(state.landmarksDrawn?.length ?? state.landmarksRandomCount) ?? '—'}</b>
+                            </span>
+                        </div>
+
+                        <div style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {(state.landmarksDrawn ?? []).length === 0 ? (
+                                <span style={ui.badge}>Not drawn yet</span>
+                            ) : (
+                                (state.landmarksDrawn ?? []).map((id) => (
+                                    <Tooltip
+                                        placement="bottom"
+                                        content={
+                                            <div>
+                                                <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
+                                                    {lmLabel(id)}
+                                                </div>
+                                                <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
+                                                    {lmDesc(id)}
+                                                </div>
+                                            </div>
+                                        }
+                                    >
+                                        <span style={{ ...ui.badge, cursor: 'help' }}>
+                                            🏷️ {lmLabel(id)}
+                                        </span>
+                                    </Tooltip>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* TOP PAGE ACTIONS */}
                 {state && (
