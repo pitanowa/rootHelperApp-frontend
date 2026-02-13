@@ -1,4 +1,3 @@
-// components/modals/MatchSummary.tsx
 import React, { useEffect, useRef } from "react";
 
 type Variant = "default" | "war";

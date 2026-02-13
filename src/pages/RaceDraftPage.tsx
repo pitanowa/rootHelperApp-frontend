@@ -10,6 +10,9 @@ import riverfolk from '../assets/races/root_riverfolk.png'
 import knights from '../assets/races/root_knights.png'
 import kingdom from '../assets/races/root_kingdom.png'
 import rats from '../assets/races/root_rats.png'
+import Tooltip from '../components/Tooltip'
+import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/landmarks'
+
 
 const RACE_ICON: Record<string, string> = {
   CATS: cats,
@@ -23,17 +26,6 @@ const RACE_ICON: Record<string, string> = {
   MOLES: kingdom,
   RATS: rats,
 }
-
-const LANDMARKS = [
-  { id: 'lost_city', label: 'Lost City' },
-  { id: 'black_market', label: 'Black Market' },
-  { id: 'legendary_forge', label: 'Legendary Forge' },
-  { id: 'tower', label: 'The Tower' },
-  { id: 'ferry', label: 'Ferry' },
-  { id: 'bandit_gangs', label: 'Bandit Gangs' },
-] as const
-
-type LandmarkId = (typeof LANDMARKS)[number]['id']
 
 // kanoniczna lista ras (musi się zgadzać z backendem)
 const ALL_RACES = Object.keys(RACE_ICON)
@@ -740,24 +732,27 @@ export default function RaceDraftView({
                 </div>
 
                 {/* pick banned landmark */}
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  {LANDMARKS.map((lm) => {
-                    const picked = localLandmarkBanned === lm.id
-                    const disabled = loading || draft.status !== 'DRAFTING'
+                {LANDMARKS.map((lm) => {
+                  const picked = localLandmarkBanned === lm.id
+                  const disabled = loading || draft.status !== 'DRAFTING'
 
-                    return (
+                  return (
+                    <Tooltip
+                      key={lm.id}
+                      placement="top"
+                      content={lmTooltipContent(lm.id as LandmarkId)}
+                      disabled={disabled}
+                    >
                       <button
-                        key={lm.id}
                         disabled={disabled}
                         onClick={() => setLocalLandmarkBanned(lm.id)}
                         style={ui.raceTile(picked ? 'banned' : 'neutral', disabled)}
-                        title={lm.label}
                       >
-                        {picked ? '🚫' : '🏷️'} {lm.label}
+                        {picked ? '🚫' : '🏷️'} {lmLabel(lm.id as LandmarkId)}
                       </button>
-                    )
-                  })}
-                </div>
+                    </Tooltip>
+                  )
+                })}
 
                 {/* choose random count */}
                 <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -855,11 +850,18 @@ export default function RaceDraftView({
                 ) : (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     {landmarksDrawn!.map((id) => (
-                      <span key={id} style={ui.badge('ghost')}>
-                        🏷️ {id}
-                      </span>
+                      <Tooltip
+                        key={id}
+                        placement="bottom"
+                        content={lmTooltipContent(id as LandmarkId)}
+                      >
+                        <span style={{ ...ui.badge('ghost'), cursor: 'help' }}>
+                          🏷️ {lmLabel(id as LandmarkId)}
+                        </span>
+                      </Tooltip>
                     ))}
                   </div>
+
                 )}
               </div>
             )}

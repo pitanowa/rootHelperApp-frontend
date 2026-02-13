@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { LANDMARKS, lmLabel, lmDesc, type LandmarkId } from '../data/landmarks'
+import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/landmarks'
 import Tooltip from '../components/Tooltip'
 
 type MatchPlayerState = {
@@ -131,17 +131,9 @@ export default function RacePickView(props: Props) {
                 ) : (
                   landmarksDrawn!.map((id) => (
                     <Tooltip
+                      key={id}
                       placement="bottom"
-                      content={
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
-                            {lmLabel(id)}
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
-                            {lmDesc(id)}
-                          </div>
-                        </div>
-                      }
+                      content={lmTooltipContent(id as LandmarkId)}
                     >
                       <span style={{ ...ui.badge, cursor: 'help' }}>
                         🏷️ {lmLabel(id)}
@@ -217,17 +209,9 @@ export default function RacePickView(props: Props) {
 
                 return (
                   <Tooltip
+                    key={lm.id}
                     placement="top"
-                    content={
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
-                          {lm.label}
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
-                          {lm.desc}
-                        </div>
-                      </div>
-                    }
+                    content={lmTooltipContent(lm.id)}
                     disabled={loading || alreadyLocked}
                   >
                     <button

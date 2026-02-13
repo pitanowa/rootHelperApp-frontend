@@ -6,7 +6,7 @@ import { RACE_LABEL } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
 import CardsModal from '../components/modals/CardsModal'
 import RacePickView from './RacePickPage'
-import { lmLabel, lmDesc } from '../data/landmarks'
+import { type LandmarkId, lmLabel, lmTooltipContent } from '../data/landmarks'
 import Tooltip from '../components/Tooltip'
 import { MatchSummaryModal } from "../components/modals/MatchSummary"
 import { MatchSummaryView } from "../components/match/MatchSummaryView"
@@ -1783,29 +1783,17 @@ export default function MatchPage() {
                         </div>
 
                         <div style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {(state.landmarksDrawn ?? []).length === 0 ? (
-                                <span style={ui.badge}>Not drawn yet</span>
-                            ) : (
-                                (state.landmarksDrawn ?? []).map((id) => (
-                                    <Tooltip key={id}
-                                        placement="bottom"
-                                        content={
-                                            <div>
-                                                <div style={{ fontSize: 12, fontWeight: 1000, opacity: 0.8, marginBottom: 6, letterSpacing: 0.25, textTransform: 'uppercase' }}>
-                                                    {lmLabel(id)}
-                                                </div>
-                                                <div style={{ fontSize: 13, fontWeight: 850, opacity: 0.96, lineHeight: 1.35 }}>
-                                                    {lmDesc(id)}
-                                                </div>
-                                            </div>
-                                        }
-                                    >
-                                        <span style={{ ...ui.badge, cursor: 'help' }}>
-                                            🏷️ {lmLabel(id)}
-                                        </span>
-                                    </Tooltip>
-                                ))
-                            )}
+                            {(state.landmarksDrawn ?? []).map((id) => (
+                                <Tooltip
+                                    key={id}
+                                    placement="bottom"
+                                    content={lmTooltipContent(id as LandmarkId)}
+                                >
+                                    <span style={{ ...ui.badge, cursor: 'help' }}>
+                                        🏷️ {lmLabel(id as LandmarkId)}
+                                    </span>
+                                </Tooltip>
+                            ))}
                         </div>
                     </div>
                 )}
@@ -2233,8 +2221,6 @@ export default function MatchPage() {
                             raceLabel={raceLabel}
                             RACE_ICON={RACE_ICON}
                             RACE_COLOR={RACE_COLOR}
-                            lmLabel={lmLabel}
-                            lmDesc={lmDesc}
                         />
                     ) : null}
                 </MatchSummaryModal>
