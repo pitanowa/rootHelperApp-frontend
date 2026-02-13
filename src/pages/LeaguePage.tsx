@@ -2,6 +2,22 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiDelete, apiGet, apiPost } from '../api'
 import type { Player } from '../types'
+import { MatchSummaryModal } from "../components/modals/MatchSummary"
+import { MatchSummaryView } from "../components/match/MatchSummaryView"
+import { lmLabel, lmDesc } from "../data/landmarks"
+import { RACE_LABEL } from "../constants/races"
+import battlefield from "../assets/backgrounds/root_match_summary.png";
+
+import cats from '../assets/races/root_cats.png'
+import dynasty from '../assets/races/root_dynasty.png'
+import alliance from '../assets/races/root_alliance.png'
+import crows from '../assets/races/root_crows.png'
+import vaga from '../assets/races/root_vaga.png'
+import priests from '../assets/races/root_priests.png'
+import riverfolk from '../assets/races/root_riverfolk.png'
+import knights from '../assets/races/root_knights.png'
+import kingdom from '../assets/races/root_kingdom.png'
+import rats from '../assets/races/root_rats.png'
 
 type StandingRow = {
     playerId: number
@@ -27,6 +43,33 @@ type MatchListItem = {
     timerSecondsInitial: number
     ranked: boolean
     name?: string | null
+}
+
+type MatchSummary = {
+    matchId: number
+    leagueId: number
+    matchName: string | null
+    ranked: boolean
+    finished: boolean
+    description: string | null
+    players: {
+        playerId: number
+        playerName: string
+        raceId: string | null
+        raceLabel?: string | null
+        points: number
+        roots: number
+    }[]
+    landmarks: { id: string; label: string }[]
+    rankingAfter: {
+        position: number
+        playerId: number
+        playerName: string
+        totalPoints: number
+        totalRoots: number
+        gamesPlayed: number
+        wins: number
+    }[]
 }
 
 
@@ -667,6 +710,80 @@ const ui = {
     playerName: { fontWeight: 1000, letterSpacing: 0.2 } as const,
 }
 
+function normalizeRace(race?: string | null) {
+    if (!race) return ''
+    return race
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+}
+
+function raceKey(race?: string | null) {
+    if (!race) return ''
+    const raw = race.trim()
+    if (RACE_ICON[raw]) return raw
+
+    const n = normalizeRace(raw)
+    const ALIASES: Record<string, string> = {
+        koty: 'CATS',
+        orly: 'EAGLES',
+        'sojusz zwierzat': 'ALLIANCE',
+        kruki: 'CROWS',
+        wedrowiec: 'VAGABOND',
+        jaszczury: 'LIZARDS',
+        wydry: 'OTTERS',
+        borsuki: 'BADGERS',
+        krety: 'MOLES',
+        szczury: 'RATS',
+
+        cats: 'CATS',
+        eagles: 'EAGLES',
+        alliance: 'ALLIANCE',
+        crows: 'CROWS',
+        vagabond: 'VAGABOND',
+        lizards: 'LIZARDS',
+        otters: 'OTTERS',
+        badgers: 'BADGERS',
+        moles: 'MOLES',
+        rats: 'RATS',
+    }
+
+    return ALIASES[n] ?? raw.toUpperCase()
+}
+
+function raceLabel(race?: string | null) {
+    const rk = raceKey(race)
+    return rk ? (RACE_LABEL[rk] ?? rk) : '—'
+}
+
+const RACE_ICON: Record<string, string> = {
+    CATS: cats,
+    EAGLES: dynasty,
+    ALLIANCE: alliance,
+    CROWS: crows,
+    VAGABOND: vaga,
+    LIZARDS: priests,
+    OTTERS: riverfolk,
+    BADGERS: knights,
+    MOLES: kingdom,
+    RATS: rats,
+}
+
+const RACE_COLOR: Record<string, string> = {
+    CATS: '#da8608',
+    EAGLES: '#02309c',
+    ALLIANCE: '#16a34a',
+    CROWS: '#6d28d9',
+    VAGABOND: '#553c3c',
+    LIZARDS: '#e0cc15',
+    OTTERS: '#0fc2aa',
+    BADGERS: '#4d4d4d',
+    MOLES: '#e69a7b',
+    RATS: '#dc2626',
+}
+
 export default function LeaguePage() {
     const { leagueId } = useParams()
     const lid = Number(leagueId)
@@ -682,6 +799,9 @@ export default function LeaguePage() {
     const [landmarksEnabled, setLandmarksEnabled] = useState(false)
     const [raceDraftEnabled, setRaceDraftEnabled] = useState(false)
     const [excludedRaces, setExcludedRaces] = useState<string[]>([])
+    const [summaryOpen, setSummaryOpen] = useState(false)
+    const [summary, setSummary] = useState<MatchSummary | null>(null)
+    const [summaryLoading, setSummaryLoading] = useState(false)
 
     const players: Player[] = useMemo(
         () => standings.map((s) => ({ id: s.playerId, name: s.playerName, createdAt: '' })),
@@ -711,6 +831,22 @@ export default function LeaguePage() {
             setError(e?.message ?? 'Failed to load league')
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function openMatchSummary(matchId: number) {
+        setSummary(null)
+        setSummaryOpen(true)
+        setSummaryLoading(true)
+        setError(null)
+        try {
+            const s = await apiGet<MatchSummary>(`/api/matches/${matchId}/summary`)
+            setSummary(s)
+        } catch (e: any) {
+            setError(e?.message ?? 'Failed to load match summary')
+            setSummaryOpen(false)
+        } finally {
+            setSummaryLoading(false)
         }
     }
 
@@ -1152,22 +1288,40 @@ export default function LeaguePage() {
                                     </div>
 
                                     <div style={ui.actions}>
-                                        <Link
-                                            to={`/matches/${m.id}`}
-                                            style={ui.linkBtn('open', disabled)}
-                                            onClick={(e) => {
-                                                if (disabled) e.preventDefault()
-                                            }}
+                                        {m.status !== 'FINISHED' && (
+                                            <Link
+                                                to={`/matches/${m.id}`}
+                                                style={ui.linkBtn('open', disabled)}
+                                                onClick={(e) => {
+                                                    if (disabled) e.preventDefault()
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (disabled) return
+                                                    e.currentTarget.style.transform = 'translateY(-1px)'
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'translateY(0)'
+                                                }}
+                                            >
+                                                ⚔️ Open
+                                            </Link>
+                                        )}
+
+                                        <button
+                                            onClick={() => openMatchSummary(m.id)}
+                                            disabled={disabled || summaryLoading || m.status !== 'FINISHED'}
+                                            title={m.status !== 'FINISHED' ? 'Summary available after FINISHED' : undefined}
+                                            style={ui.linkBtn('ghost', disabled || summaryLoading || m.status !== 'FINISHED')}
                                             onMouseEnter={(e) => {
-                                                if (disabled) return
+                                                if (disabled || summaryLoading || m.status !== 'FINISHED') return
                                                 e.currentTarget.style.transform = 'translateY(-1px)'
                                             }}
                                             onMouseLeave={(e) => {
                                                 e.currentTarget.style.transform = 'translateY(0)'
                                             }}
                                         >
-                                            ⚔️ Open
-                                        </Link>
+                                            📜 Summary
+                                        </button>
 
                                         {/* ✅ Toggle ranked/casual — zawsze widoczne */}
                                         <button
@@ -1215,15 +1369,45 @@ export default function LeaguePage() {
                                             🩸 Delete
                                         </button>
                                     </div>
-
                                 </div>
                             )
                         })}
                     </div>
                 )}
             </div>
-
-
+            <MatchSummaryModal
+                open={summaryOpen && !!summary}
+                loading={summaryLoading}
+                saving={false}
+                title={
+                    summary?.matchName?.trim()
+                        ? summary.matchName
+                        : `Match #${summary?.matchId}`
+                }
+                subtitle={
+                    summary
+                        ? `League #${summary.leagueId} • ${summary.ranked ? "RANKED WAR" : "CASUAL BLOODBATH"}`
+                        : undefined
+                }
+                accentHex="#dc2626"
+                variant="war"
+                backgroundUrl={battlefield}
+                onClose={() => setSummaryOpen(false)}
+                hideSave
+            >
+                {summary ? (
+                    <MatchSummaryView
+                        summary={summary}
+                        mode="readonly"
+                        raceKey={raceKey}
+                        raceLabel={raceLabel}
+                        RACE_ICON={RACE_ICON}
+                        RACE_COLOR={RACE_COLOR}
+                        lmLabel={lmLabel}
+                        lmDesc={lmDesc}
+                    />
+                ) : null}
+            </MatchSummaryModal>
         </div>
     )
 }

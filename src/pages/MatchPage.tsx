@@ -8,7 +8,8 @@ import CardsModal from '../components/modals/CardsModal'
 import RacePickView from './RacePickPage'
 import { lmLabel, lmDesc } from '../data/landmarks'
 import Tooltip from '../components/Tooltip'
-
+import { MatchSummaryModal } from "../components/modals/MatchSummary"
+import { MatchSummaryView } from "../components/match/MatchSummaryView"
 
 // ✅ adjust these imports to your actual icon paths
 import cats from '../assets/races/root_cats.png'
@@ -45,6 +46,31 @@ type MatchState = {
     landmarksDrawn?: string[]
 }
 
+type MatchSummary = {
+    matchId: number
+    leagueId: number
+    ranked: boolean
+    finished: boolean
+    description: string | null
+    players: {
+        playerId: number
+        playerName: string
+        raceId: string | null
+        raceLabel?: string | null
+        points: number
+        roots: number
+    }[]
+    landmarks: { id: string; label: string }[]
+    rankingAfter: {
+        position: number
+        playerId: number
+        playerName: string
+        totalPoints: number
+        totalRoots: number
+        gamesPlayed: number
+        wins: number
+    }[]
+}
 
 type DraftAssignment = {
     playerId: number
@@ -760,6 +786,142 @@ const ui = {
         filter: 'drop-shadow(0 22px 60px rgba(0,0,0,0.55))',
     } as const,
 
+    summaryOverlay: {
+        position: 'fixed',
+        inset: 0,
+        background: 'radial-gradient(1200px 800px at 20% 10%, rgba(59,130,246,0.20), transparent 60%), rgba(0,0,0,0.72)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 18,
+        zIndex: 2147483647,
+    } as const,
+
+    summaryModal: {
+        width: 'min(980px, 100%)',
+        maxHeight: 'min(88vh, 920px)',
+        borderRadius: 26,
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: 'linear-gradient(180deg, rgba(16,16,22,1), rgba(10,10,12,1))',
+        boxShadow: '0 40px 140px rgba(0,0,0,0.70), 0 0 80px rgba(59,130,246,0.18)',
+        overflow: 'hidden',
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr auto',
+    } as const,
+
+    summaryHeader: {
+        padding: 16,
+        borderBottom: '1px solid rgba(255,255,255,0.10)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        background: 'linear-gradient(180deg, rgba(20,20,28,1), rgba(14,14,18,1))',
+    } as const,
+
+    summaryTitle: {
+        fontSize: 18,
+        fontWeight: 1000,
+        letterSpacing: -0.2,
+    } as const,
+
+    summarySub: {
+        fontSize: 12,
+        opacity: 0.75,
+        fontWeight: 900,
+        marginTop: 2,
+    } as const,
+
+    summaryBody: {
+        padding: 16,
+        overflow: 'auto',
+    } as const,
+
+    summaryFooter: {
+        padding: 14,
+        borderTop: '1px solid rgba(255,255,255,0.10)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 10,
+        alignItems: 'center',
+        background: 'linear-gradient(180deg, rgba(14,14,18,1), rgba(10,10,12,1))',
+    } as const,
+
+    summaryGrid: {
+        display: 'grid',
+        gridTemplateColumns: '1.15fr 0.85fr',
+        gap: 14,
+    } as const,
+
+    summaryCol: {
+        display: 'grid',
+        gap: 14,
+    } as const,
+
+    summaryCard: {
+        borderRadius: 18,
+        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.04)',
+        boxShadow: '0 18px 60px rgba(0,0,0,0.45)',
+        overflow: 'hidden',
+    } as const,
+
+    summaryCardHead: {
+        padding: 12,
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 10,
+        background: 'rgba(255,255,255,0.03)',
+    } as const,
+
+    summaryCardTitle: {
+        fontWeight: 1000,
+        letterSpacing: 0.2,
+        opacity: 0.9,
+    } as const,
+
+    summaryCardBody: {
+        padding: 12,
+    } as const,
+
+    summaryRow: {
+        display: 'grid',
+        gridTemplateColumns: '1fr auto auto',
+        gap: 10,
+        padding: 10,
+        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(0,0,0,0.18)',
+        alignItems: 'center',
+    } as const,
+
+    summaryRankRow: {
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto auto',
+        gap: 10,
+        padding: 10,
+        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(0,0,0,0.14)',
+        alignItems: 'center',
+    } as const,
+
+    summaryTextarea: {
+        width: '100%',
+        padding: '10px 12px',
+        borderRadius: 14,
+        border: '1px solid rgba(255,255,255,0.14)',
+        background: 'rgba(255,255,255,0.06)',
+        color: 'rgba(255,255,255,0.92)',
+        outline: 'none',
+        fontWeight: 800,
+        letterSpacing: 0.2,
+        resize: 'vertical',
+        minHeight: 120,
+    } as const,
+
 }
 
 function fmt(secs: number) {
@@ -978,6 +1140,10 @@ export default function MatchPage() {
 
     const [scoreInput, setScoreInput] = useState<Record<number, string>>({})
 
+    const [summaryOpen, setSummaryOpen] = useState(false)
+    const [summary, setSummary] = useState<MatchSummary | null>(null)
+    const [summaryDesc, setSummaryDesc] = useState('')
+    const [summarySaving, setSummarySaving] = useState(false)
 
     // ✅ Cards modal
     const [cardsOpen, setCardsOpen] = useState(false)
@@ -1331,6 +1497,26 @@ export default function MatchPage() {
             setError(e?.message ?? 'Failed to refresh timer')
         }
     }
+    async function openSummaryModal() {
+        const s = await apiGet<MatchSummary>(`/api/matches/${mid}/summary`)
+        setSummary(s)
+        setSummaryDesc((s.description ?? '').toString())
+        setSummaryOpen(true)
+    }
+
+    async function saveSummaryAndExit() {
+        if (!summary) return
+        setSummarySaving(true)
+        try {
+            await apiPost<void>(`/api/matches/${mid}/description`, { description: summaryDesc })
+            // po zapisie wracamy do ligi
+            window.location.href = `/leagues/${summary.leagueId}`
+        } catch (e: any) {
+            setError(e?.message ?? 'Failed to save description')
+        } finally {
+            setSummarySaving(false)
+        }
+    }
 
 
     async function finish() {
@@ -1348,10 +1534,10 @@ export default function MatchPage() {
                     } catch { }
                 }
             }
-
             await apiPost<void>(`/api/matches/${mid}/finish`)
             await load()
-            if (state?.leagueId) window.location.href = `/leagues/${state.leagueId}`
+            await openSummaryModal()
+
         } finally {
             setLoading(false)
         }
@@ -1601,7 +1787,7 @@ export default function MatchPage() {
                                 <span style={ui.badge}>Not drawn yet</span>
                             ) : (
                                 (state.landmarksDrawn ?? []).map((id) => (
-                                    <Tooltip
+                                    <Tooltip key={id}
                                         placement="bottom"
                                         content={
                                             <div>
@@ -2022,6 +2208,36 @@ export default function MatchPage() {
                     }}
                     ui={ui}
                 />
+                {/* SUMMARY MODAL (ULTRA) */}
+                <MatchSummaryModal
+                    open={summaryOpen && !!summary}
+                    loading={loading}
+                    saving={summarySaving}
+                    title="Match Summary"
+                    subtitle={
+                        summary
+                            ? `match #${summary.matchId} • league #${summary.leagueId} • ${summary.ranked ? "ranked" : "casual"}`
+                            : undefined
+                    }
+                    accentHex="#3b82f6"
+                    onClose={() => setSummaryOpen(false)}
+                    onSave={saveSummaryAndExit}
+                >
+                    {summary ? (
+                        <MatchSummaryView
+                            summary={summary}
+                            mode="edit"
+                            description={summaryDesc}
+                            setDescription={setSummaryDesc}
+                            raceKey={raceKey}
+                            raceLabel={raceLabel}
+                            RACE_ICON={RACE_ICON}
+                            RACE_COLOR={RACE_COLOR}
+                            lmLabel={lmLabel}
+                            lmDesc={lmDesc}
+                        />
+                    ) : null}
+                </MatchSummaryModal>
             </div>
         </div>
     )

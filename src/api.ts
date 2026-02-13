@@ -55,3 +55,12 @@ export async function apiDelete<T>(url: string): Promise<T> {
   if (res.status === 204) return undefined as T
   return (await res.json()) as T
 }
+
+export const finishMatch = (matchId: number) =>
+  apiPost(`/matches/${matchId}/finish`, {})
+
+export const getMatchSummary = (matchId: number) =>
+  apiGet(`/matches/${matchId}/summary`)
+
+export const setMatchDescription = (matchId: number, description: string) =>
+  apiPost(`/matches/${matchId}/description`, { description })
