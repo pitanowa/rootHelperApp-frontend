@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiDelete, apiGet, apiPost } from '../api'
 import type { Player } from '../types'
+import { createPlayer, deletePlayer, listPlayers } from '../features/players/api'
+import { toErrorMessage } from '../shared/errors'
 
 // =====================
 // Legendary Dark UI
@@ -151,10 +152,10 @@ export default function PlayersPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await apiGet<Player[]>('/api/players')
+      const data = await listPlayers()
       setPlayers(data)
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load players')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to load players'))
     } finally {
       setLoading(false)
     }
@@ -171,11 +172,11 @@ export default function PlayersPage() {
     setLoading(true)
     setError(null)
     try {
-      const created = await apiPost<Player>('/api/players', { name: trimmed })
+      const created = await createPlayer(trimmed)
       setPlayers((prev) => [...prev, created])
       setName('')
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to add player')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to add player'))
     } finally {
       setLoading(false)
     }
@@ -189,11 +190,12 @@ export default function PlayersPage() {
     setError(null)
 
     try {
-      await apiDelete<void>(`/api/players/${id}`)
-    } catch (e: any) {
-      const status = e?.response?.status ?? e?.status
-      if (status !== 404) {
-        setError(e?.message ?? 'Failed to remove player')
+      await deletePlayer(id)
+    } catch (e: unknown) {
+      const msg = toErrorMessage(e, 'Failed to remove player')
+      const notFound = msg.includes('404')
+      if (!notFound) {
+        setError(msg)
         setLoading(false)
         return
       }

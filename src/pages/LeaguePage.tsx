@@ -1243,7 +1243,6 @@ export default function LeaguePage() {
                 ) : (
                     <div style={ui.historyGrid}>
                         {matches.map((m) => {
-                            const isDraft = m.status === 'DRAFT'
                             const disabled = loading
 
                             return (

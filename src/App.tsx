@@ -8,29 +8,22 @@ import LeaguePage from './pages/LeaguePage'
 import MatchPage from './pages/MatchPage'
 import HomePage from './pages/HomePage'
 
-import { apiGet } from './api'
-import { useAppCtx } from './AppContext'
-
-type LeagueDto = { id: number; groupId: number; name: string }
-type GroupDto = { id: number; name: string }
-
-type ActiveMatchDto = {
-  id: number
-  status: string
-  leagueId?: number
-  groupId?: number
-  ranked?: boolean
-}
+import { useAppCtx } from './useAppCtx'
+import type { Group, League } from './types'
+import { listGroups, listGroupLeagues } from './features/groups/api'
+import { listLeagues } from './features/leagues/api'
+import { listActiveMatches } from './features/matches/api'
+import type { ActiveMatch } from './features/matches/types'
 
 function Nav() {
   const nav = useNavigate()
   const { selectedGroupId, setSelectedGroupId, selectedLeagueId, setSelectedLeagueId } = useAppCtx()
 
-  const [leagues, setLeagues] = useState<LeagueDto[]>([])
-  const [activeMatches, setActiveMatches] = useState<ActiveMatchDto[]>([])
+  const [leagues, setLeagues] = useState<League[]>([])
+  const [activeMatches, setActiveMatches] = useState<ActiveMatch[]>([])
   const [loadingLeagues, setLoadingLeagues] = useState(false)
   const [loadingMatches, setLoadingMatches] = useState(false)
-  const [groups, setGroups] = useState<GroupDto[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
   const [loadingGroups, setLoadingGroups] = useState(false)
   const [leagueMap, setLeagueMap] = useState<Record<number, string>>({})
 
@@ -40,7 +33,7 @@ function Nav() {
       ; (async () => {
         try {
           setLoadingGroups(true)
-          const data = await apiGet<GroupDto[]>(`/api/groups`)
+          const data = await listGroups()
           if (cancelled) return
           setGroups(data ?? [])
         } finally {
@@ -56,7 +49,7 @@ function Nav() {
     let cancelled = false
       ; (async () => {
         try {
-          const all = await apiGet<{ id: number; name: string }[]>(`/api/leagues`)
+          const all = await listLeagues()
           if (cancelled) return
           setLeagueMap(Object.fromEntries((all ?? []).map((l) => [l.id, l.name])))
         } catch {
@@ -96,7 +89,7 @@ function Nav() {
         borderRadius: 16,
         fontSize: 14,
         lineHeight: '16px',
-        fontWeight: 1100 as any,
+        fontWeight: 1000,
         textDecoration: 'none',
         border: active ? '1px solid rgba(248,113,113,0.30)' : '1px solid rgba(255,255,255,0.14)',
         background: active
@@ -193,7 +186,7 @@ function Nav() {
       ; (async () => {
         try {
           setLoadingLeagues(true)
-          const data = await apiGet<LeagueDto[]>(`/api/groups/${selectedGroupId}/leagues`)
+          const data = await listGroupLeagues(selectedGroupId)
           if (cancelled) return
 
           setLeagues(data ?? [])
@@ -209,8 +202,7 @@ function Nav() {
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGroupId])
+  }, [selectedGroupId, selectedLeagueId, setSelectedLeagueId])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -223,11 +215,7 @@ function Nav() {
         try {
           setLoadingMatches(true)
 
-          const qs = new URLSearchParams()
-          qs.set('groupId', String(selectedGroupId))
-          if (selectedLeagueId) qs.set('leagueId', String(selectedLeagueId))
-
-          const data = await apiGet<ActiveMatchDto[]>(`/api/matches/active?${qs.toString()}`)
+          const data = await listActiveMatches(selectedGroupId, selectedLeagueId)
           if (cancelled) return
           setActiveMatches(data ?? [])
         } finally {

@@ -1104,9 +1104,6 @@ function lsGetJson<T>(key: string, fallback: T): T {
 function lsSetJson(key: string, val: any) {
     window.localStorage.setItem(key, JSON.stringify(val))
 }
-function lsDel(key: string) {
-    window.localStorage.removeItem(key)
-}
 
 function lsGetRaceMap(mid: number): Record<number, string> {
     try { return JSON.parse(localStorage.getItem(LS_RACE(mid)) || '{}') } catch { return {} }

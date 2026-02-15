@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react'
 import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/landmarks'
 import Tooltip from '../components/Tooltip'
+import type { CSSProperties } from 'react'
+import type { MatchPlayerState } from '../features/matches/types'
 
-type MatchPlayerState = {
-  playerId: number
-  playerName: string
-  score: number
-  timeLeftSeconds: number
-  race?: string | null
+type RacePickUi = {
+  page: CSSProperties
+  shell: CSSProperties
+  topbar: CSSProperties
+  badge: CSSProperties
+  badgeStrong: (hex: string) => CSSProperties
+  btn: (variant: 'primary' | 'ghost' | 'race', disabled: boolean, hex?: string) => CSSProperties
+  card?: CSSProperties
+  errorBox: CSSProperties
 }
 
 type Props = {
@@ -22,7 +27,7 @@ type Props = {
   raceLabel: (race?: string | null) => string
   RACE_ICON: Record<string, string>
   RACE_COLOR: Record<string, string>
-  ui: any
+  ui: RacePickUi
   landmarksEnabled?: boolean
   landmarkBanned?: string | null
   landmarksRandomCount?: number | null

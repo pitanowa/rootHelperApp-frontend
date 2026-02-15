@@ -1,11 +1,15 @@
 import { createPortal } from 'react-dom'
+import type { CSSProperties } from 'react'
+import type { MatchPlayerState } from '../../features/matches/types'
 
-type MatchPlayerState = {
-  playerId: number
-  playerName: string
-  score: number
-  timeLeftSeconds: number
-  race?: string | null
+type SetupModalUi = {
+  overlay: CSSProperties
+  modal: (hex: string) => CSSProperties
+  modalTitle: CSSProperties
+  modalBody: CSSProperties
+  modalFooter: CSSProperties
+  icon: (hex: string) => CSSProperties
+  btn: (variant: 'ghost' | 'race', disabled: boolean, hex?: string) => CSSProperties
 }
 
 type Props = {
@@ -29,7 +33,7 @@ type Props = {
   lsSetBool: (key: string, val: boolean) => void
   LS_SETUP: (mid: number) => string
 
-  ui: any
+  ui: SetupModalUi
 }
 
 export default function SetupModal(props: Props) {

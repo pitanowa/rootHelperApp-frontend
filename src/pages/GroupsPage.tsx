@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { apiGet, apiPost } from '../api'
 import type { Group } from '../types'
+import { createGroup as createGroupRequest, listGroups } from '../features/groups/api'
+import { toErrorMessage } from '../shared/errors'
 
 // =====================
 // Legendary Dark UI (Groups)
@@ -144,9 +145,9 @@ export default function GroupsPage() {
     setLoading(true)
     setError(null)
     try {
-      setGroups(await apiGet<Group[]>('/api/groups'))
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load groups')
+      setGroups(await listGroups())
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to load groups'))
     } finally {
       setLoading(false)
     }
@@ -163,11 +164,11 @@ export default function GroupsPage() {
     setLoading(true)
     setError(null)
     try {
-      const created = await apiPost<Group>('/api/groups', { name: trimmed })
+      const created = await createGroupRequest(trimmed)
       setGroups((prev) => [...prev, created])
       setName('')
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to create group')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to create group'))
     } finally {
       setLoading(false)
     }

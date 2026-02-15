@@ -1,35 +1,15 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiGet } from '../api'
-import { useAppCtx } from '../AppContext'
+import { useAppCtx } from '../useAppCtx'
+import { listGroups } from '../features/groups/api'
+import { listLeagues, listLeagueStandings, type StandingRow } from '../features/leagues/api'
+import { listActiveMatches } from '../features/matches/api'
+import type { ActiveMatch } from '../features/matches/types'
+import { listPlayers } from '../features/players/api'
+import { toErrorMessage } from '../shared/errors'
 
-type ActiveMatchListItem = {
-  id: number
-  status: string // "RUNNING"
-  leagueId?: number
-  groupId?: number
-  ranked?: boolean
-}
-
-type NamedEntity = {
-  id: number
-  name: string
-}
-
-type PlayerListItem = {
-  id: number
-  name: string
-}
-
-type StandingRow = {
-  playerId: number
-  playerName: string
-  rootsTotal: number
-  pointsTotal: number
-  gamesPlayed: number
-  wins: number
-}
+type PlayerListItem = { id: number; name: string }
 
 
 // =====================
@@ -287,7 +267,7 @@ export default function HomePage() {
   const [loadingPlayers, setLoadingPlayers] = useState(true)
   const [playersError, setPlayersError] = useState<string | null>(null)
 
-  const [activeMatches, setActiveMatches] = useState<ActiveMatchListItem[]>([])
+  const [activeMatches, setActiveMatches] = useState<ActiveMatch[]>([])
   const [loadingActive, setLoadingActive] = useState(true)
   const [activeError, setActiveError] = useState<string | null>(null)
 
@@ -313,10 +293,10 @@ export default function HomePage() {
 
       try {
         const [matches, leagues, groups, playersResp] = await Promise.all([
-          apiGet<ActiveMatchListItem[]>('/api/matches/active'),
-          apiGet<NamedEntity[]>('/api/leagues'),
-          apiGet<NamedEntity[]>('/api/groups'),
-          apiGet<PlayerListItem[]>('/api/players'),
+          listActiveMatches(),
+          listLeagues(),
+          listGroups(),
+          listPlayers(),
         ])
 
         if (cancelled) return
@@ -337,21 +317,22 @@ export default function HomePage() {
           if (lid == null) {
             setStandings([])
           } else {
-            const s = await apiGet<StandingRow[]>(`/api/leagues/${lid}/standings`)
+            const s = await listLeagueStandings(lid)
             if (!cancelled) setStandings(s ?? [])
           }
-        } catch (e: any) {
-          if (!cancelled) setStandingsError(e?.message ?? 'Failed to load standings')
+        } catch (e: unknown) {
+          if (!cancelled) setStandingsError(toErrorMessage(e, 'Failed to load standings'))
         } finally {
           if (!cancelled) setLoadingStandings(false)
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (cancelled) return
-        setActiveError(e?.message ?? 'Failed to load active matches')
+        setActiveError(toErrorMessage(e, 'Failed to load active matches'))
       } finally {
-        if (cancelled) return
-        setLoadingPlayers(false)
-        setLoadingActive(false)
+        if (!cancelled) {
+          setLoadingPlayers(false)
+          setLoadingActive(false)
+        }
       }
     }
 
@@ -500,12 +481,13 @@ export default function HomePage() {
                 <div style={{ display: 'grid' }}>
                   {standings.map((r, idx) => {
                     const rank = idx + 1
+                    const roots = r.rootsTotal ?? 0
                     const baseBg = rank <= 3 ? 'rgba(220,38,38,0.08)' : 'transparent'
                     return (
                       <div
                         key={r.playerId}
                         style={{ ...ui.standingsRowMini, background: baseBg }}
-                        title={`Korzenie: ${r.rootsTotal} | Punkty: ${r.pointsTotal} | Games: ${r.gamesPlayed} | Wins: ${r.wins}`}
+                        title={`Korzenie: ${roots} | Punkty: ${r.pointsTotal} | Games: ${r.gamesPlayed} | Wins: ${r.wins}`}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = 'rgba(220,38,38,0.12)'
                         }}
@@ -520,7 +502,7 @@ export default function HomePage() {
                           {r.playerName}
                         </div>
                         <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                          <div style={{ fontWeight: 1000 }}>{r.rootsTotal} 🌿</div>
+                          <div style={{ fontWeight: 1000 }}>{roots} 🌿</div>
                           <div style={{ fontSize: 11, opacity: 0.7 }}>{r.pointsTotal} pts</div>
                         </div>
                       </div>

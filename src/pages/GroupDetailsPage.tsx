@@ -1,9 +1,17 @@
 import type React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { apiDelete, apiGet, apiPost } from '../api'
 import type { GroupDetails, League, Player } from '../types'
-import { useAppCtx } from '../AppContext'
+import { useAppCtx } from '../useAppCtx'
+import {
+  addGroupMember,
+  createGroupLeague,
+  getGroupDetails,
+  listGroupLeagues,
+  listPlayersForGroups,
+  removeGroupMember,
+} from '../features/groups/api'
+import { toErrorMessage } from '../shared/errors'
 
 // =====================
 // Legendary Dark UI (GroupDetails)
@@ -259,41 +267,40 @@ export default function GroupDetailsPage() {
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [allPlayers, memberIds])
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const [g, players, ls] = await Promise.all([
-        apiGet<GroupDetails>(`/api/groups/${gid}`),
-        apiGet<Player[]>('/api/players'),
-        apiGet<League[]>(`/api/groups/${gid}/leagues`),
+        getGroupDetails(gid),
+        listPlayersForGroups(),
+        listGroupLeagues(gid),
       ])
       setGroup(g)
       setAllPlayers(players)
       setLeagues(ls)
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load group details')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to load group details'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [gid])
 
   useEffect(() => {
     if (!Number.isFinite(gid)) return
     loadAll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gid])
+  }, [gid, loadAll])
 
   async function addMember() {
     if (selectedPlayerId === '') return
     setLoading(true)
     setError(null)
     try {
-      await apiPost<void>(`/api/groups/${gid}/members/${selectedPlayerId}`)
+      await addGroupMember(gid, selectedPlayerId)
       await loadAll()
       setSelectedPlayerId('')
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to add member')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to add member'))
     } finally {
       setLoading(false)
     }
@@ -306,10 +313,10 @@ export default function GroupDetailsPage() {
     setLoading(true)
     setError(null)
     try {
-      await apiDelete<void>(`/api/groups/${gid}/members/${playerId}`)
+      await removeGroupMember(gid, playerId)
       await loadAll()
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to remove member')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to remove member'))
     } finally {
       setLoading(false)
     }
@@ -322,11 +329,11 @@ export default function GroupDetailsPage() {
     setLoading(true)
     setError(null)
     try {
-      await apiPost<League>(`/api/groups/${gid}/leagues`, { name: trimmed })
+      await createGroupLeague(gid, trimmed)
       setNewLeagueName('')
       await loadAll()
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to create league')
+    } catch (e: unknown) {
+      setError(toErrorMessage(e, 'Failed to create league'))
     } finally {
       setLoading(false)
     }

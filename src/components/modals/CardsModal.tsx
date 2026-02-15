@@ -1,5 +1,30 @@
 import { createPortal } from 'react-dom'
+import type { CSSProperties } from 'react'
 import type { CardDef, Clearing, CraftType, Item } from '../../data/cards'
+
+type CardsModalUi = {
+  overlay: CSSProperties
+  cardsModal: CSSProperties
+  cardsHeadRow: CSSProperties
+  cardsFiltersRow: CSSProperties
+  btn: (variant: 'ghost' | 'danger', disabled: boolean) => CSSProperties
+  input: CSSProperties
+  chip: (active: boolean) => CSSProperties
+  cardsGridMini: CSSProperties
+  cardTile: CSSProperties
+  cardImgMiniWrap: CSSProperties
+  cardImgMini: CSSProperties
+  cardMeta: CSSProperties
+  cardName: CSSProperties
+  cardMetaLine: CSSProperties
+  badge: CSSProperties
+  badgeStrong: (hex: string) => CSSProperties
+  previewWrap: CSSProperties
+  previewCard: CSSProperties
+  previewTop: CSSProperties
+  previewBody: CSSProperties
+  previewImg: CSSProperties
+}
 
 type Props = {
   open: boolean
@@ -26,7 +51,7 @@ type Props = {
   onClose: () => void
   onResetFilters: () => void
 
-  ui: any
+  ui: CardsModalUi
 }
 
 export default function CardsModal(props: Props) {

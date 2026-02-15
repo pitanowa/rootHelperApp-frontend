@@ -1,6 +1,6 @@
 type ApiError = { code?: string; message?: string }
 
-const API_BASE_RAW = (import.meta as any)?.env?.VITE_API_BASE_URL as string | undefined
+const API_BASE_RAW = import.meta.env.VITE_API_BASE_URL as string | undefined
 const API_BASE = (API_BASE_RAW ?? '').trim().replace(/\/+$/, '') // usuń końcowe /
 
 function withBase(url: string): string {
@@ -15,7 +15,9 @@ async function parseError(res: Response): Promise<string> {
   try {
     const data = (await res.json()) as ApiError
     if (data?.message) return data.message
-  } catch {}
+  } catch {
+    // ignore json parse errors, fallback to HTTP status
+  }
   return `${res.status} ${res.statusText}`
 }
 
@@ -28,7 +30,7 @@ export async function apiGet<T>(url: string): Promise<T> {
   return (await res.json()) as T
 }
 
-export async function apiPost<T>(url: string, body?: any): Promise<T> {
+export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
   const res = await fetch(withBase(url), {
     method: 'POST',
     headers: body != null ? { 'Content-Type': 'application/json' } : undefined,
