@@ -34,11 +34,11 @@ export const LANDMARKS = [
   },
   {
     id: 'ferry',
-    label: 'Łódka',
+    label: 'Tratwa',
     setup:
-      'Umieść Łódkę na dowolnej polanie przylegającej do rzeki (lub jeziora), która nie sąsiaduje z polaną posiadającą inny punkt terenu.',
+      'Umieść Tratwę na dowolnej polanie przylegającej do rzeki (lub jeziora), która nie sąsiaduje z polaną posiadającą inny punkt terenu.',
     effect:
-      'Raz w trakcie tury gracz może przemieścić swoje jednostki przez rzekę przy pomocy Łódki. W ten sposób może przepłynąć tylko jedno pole (na mapie z jeziorem: dowolnie). Następnie dobiera 1 kartę.',
+      'Raz w trakcie tury gracz może przemieścić swoje jednostki przez rzekę przy pomocy Tratwy. W ten sposób może przepłynąć tylko jedno pole (na mapie z jeziorem: dowolnie). Następnie dobiera 1 kartę.',
   },
   {
     id: 'elder_treetop',

@@ -1,38 +1,10 @@
-import { useMemo, useState } from 'react'
-import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/landmarks'
-import Tooltip from '../components/Tooltip'
-import type { CSSProperties } from 'react'
-import type { MatchPlayerState } from '../features/matches/types'
-import { raceKey, raceLabel, RACE_COLOR, RACE_ICON, RACE_IDS } from '../constants/races'
+﻿import RacePickLandmarksSection from '../features/matches/components/RacePickLandmarksSection'
+import RacePickRacePool from '../features/matches/components/RacePickRacePool'
+import RacePickTopBar from '../features/matches/components/RacePickTopBar'
+import { useRacePickState } from '../features/matches/hooks/useRacePickState'
+import type { RacePickViewProps } from '../features/matches/racePickTypes'
 
-type RacePickUi = {
-  page: CSSProperties
-  shell: CSSProperties
-  topbar: CSSProperties
-  badge: CSSProperties
-  badgeStrong: (hex: string) => CSSProperties
-  btn: (variant: 'primary' | 'ghost' | 'race', disabled: boolean, hex?: string) => CSSProperties
-  card?: CSSProperties
-  errorBox: CSSProperties
-}
-
-type Props = {
-  matchId: number
-  players: MatchPlayerState[]
-  loading: boolean
-  error: string | null
-  onPick: (playerId: number, race: string) => Promise<void> | void
-  onRefresh: () => void
-
-  ui: RacePickUi
-  landmarksEnabled?: boolean
-  landmarkBanned?: string | null
-  landmarksRandomCount?: number | null
-  landmarksDrawn?: string[]
-  onSetLandmarksManual?: (picked: LandmarkId[]) => void | Promise<void>
-}
-
-export default function RacePickView(props: Props) {
+export default function RacePickView(props: RacePickViewProps) {
   const {
     players,
     loading,
@@ -40,7 +12,6 @@ export default function RacePickView(props: Props) {
     onPick,
     onRefresh,
     ui,
-
     landmarksEnabled,
     landmarkBanned,
     landmarksDrawn,
@@ -48,260 +19,55 @@ export default function RacePickView(props: Props) {
     onSetLandmarksManual,
   } = props
 
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number>(() => players[0]?.playerId ?? 0)
-  const [localPickedLandmarks, setLocalPickedLandmarks] = useState<LandmarkId[]>(() => {
-    const drawn = (landmarksDrawn ?? []).filter((x): x is LandmarkId =>
-      LANDMARKS.some((l) => l.id === x)
-    )
-    return drawn.slice(0, 2)
-  })
-
-  function toggleLandmark(id: LandmarkId) {
-    setLocalPickedLandmarks((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id)
-      if (prev.length >= 2) return prev // max 2
-      return [...prev, id]
-    })
-  }
-
-  const taken = useMemo(() => {
-    const s = new Set<string>()
-    for (const p of players) {
-      const rk = raceKey(p.race)
-      if (rk) s.add(rk)
-    }
-    return s
-  }, [players])
-
-  const pool = useMemo(() => RACE_IDS, [])
-
-  const selectedPlayer = players.find((p) => p.playerId === selectedPlayerId) ?? players[0] ?? null
+  const {
+    selectedPlayerId,
+    setSelectedPlayerId,
+    localPickedLandmarks,
+    setLocalPickedLandmarks,
+    toggleLandmark,
+    taken,
+    pool,
+    selectedPlayer,
+  } = useRacePickState(players, landmarksDrawn)
 
   return (
     <div style={ui.page}>
       <div style={ui.shell}>
-        <div style={ui.topbar}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={ui.badge}>Race pick (no draft)</span>
-            <button
-              onClick={onRefresh}
-              disabled={loading}
-              style={ui.btn('ghost', loading)}
-            >
-              Refresh
-            </button>
-          </div>
+        <RacePickTopBar
+          players={players}
+          selectedPlayerId={selectedPlayerId}
+          loading={loading}
+          onRefresh={onRefresh}
+          onSelectPlayer={setSelectedPlayerId}
+          ui={ui}
+        />
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {players.map((p) => {
-              const active = p.playerId === selectedPlayerId
-              return (
-                <button
-                  key={p.playerId}
-                  disabled={loading}
-                  onClick={() => setSelectedPlayerId(p.playerId)}
-                  style={{
-                    ...ui.btn(active ? 'primary' : 'ghost', loading),
-                    opacity: active ? 1 : 0.9,
-                  }}
-                  title={p.playerName}
-                >
-                  {p.playerName}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {landmarksEnabled && (
-          <div style={{ ...ui.card, marginTop: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontWeight: 1000, letterSpacing: 0.2 }}>🏷️ Landmarks</div>
-                <div style={{ opacity: 0.78, fontSize: 13, marginTop: 4 }}>
-                  Banned: <b>{landmarkBanned ?? '—'}</b> • Draw: <b>{(landmarksDrawn?.length ?? 0) || landmarksRandomCount || '—'}</b>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {(landmarksDrawn ?? []).length === 0 ? (
-                  <span style={ui.badge}>Not drawn yet</span>
-                ) : (
-                  landmarksDrawn!.map((id) => (
-                    <Tooltip
-                      key={id}
-                      placement="bottom"
-                      content={lmTooltipContent(id as LandmarkId)}
-                    >
-                      <span style={{ ...ui.badge, cursor: 'help' }}>
-                        🏷️ {lmLabel(id)}
-                      </span>
-                    </Tooltip>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        {landmarksEnabled && (
-          <div style={{ ...ui.card, marginTop: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontWeight: 1000, letterSpacing: 0.2 }}>🏷️ Choose 1-2 landmarks (manual)</div>
-                <div style={{ opacity: 0.78, fontSize: 13, marginTop: 4 }}>
-                  Picked: <b>{localPickedLandmarks.length}/2</b>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <button
-                  disabled={loading || (landmarksDrawn?.length ?? 0) > 0}
-                  onClick={() => setLocalPickedLandmarks([])}
-                  style={ui.btn('ghost', loading || (landmarksDrawn?.length ?? 0) > 0)}
-                  title={(landmarksDrawn?.length ?? 0) > 0 ? 'Already locked' : 'Clear selection'}
-                >
-                  🧹 Clear
-                </button>
-
-                <button
-                  disabled={
-                    loading ||
-                    !onSetLandmarksManual ||
-                    localPickedLandmarks.length === 0 ||
-                    (landmarksDrawn?.length ?? 0) > 0
-                  }
-                  onClick={async () => {
-                    if (!onSetLandmarksManual) return
-                    if (localPickedLandmarks.length === 0) return
-                    await onSetLandmarksManual(localPickedLandmarks)
-                  }}
-                  style={ui.btn(
-                    'primary',
-                    loading ||
-                    !onSetLandmarksManual ||
-                    localPickedLandmarks.length < 1 ||
-                    localPickedLandmarks.length > 2 ||
-                    (landmarksDrawn?.length ?? 0) > 0
-                  )}
-                  title={
-                    (landmarksDrawn?.length ?? 0) > 0
-                      ? 'Already locked'
-                      : localPickedLandmarks.length < 1
-                        ? 'Pick at least 1 landmark'
-                        : ''
-                  }
-                >
-                  ✅ Confirm landmarks
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {LANDMARKS.map((lm) => {
-                const picked = localPickedLandmarks.includes(lm.id)
-                const alreadyLocked = (landmarksDrawn?.length ?? 0) > 0
-                const disabled =
-                  loading ||
-                  alreadyLocked ||
-                  (!picked && localPickedLandmarks.length >= 2)
-
-                return (
-                  <Tooltip
-                    key={lm.id}
-                    placement="top"
-                    content={lmTooltipContent(lm.id)}
-                    disabled={loading || alreadyLocked}
-                  >
-                    <button
-                      disabled={disabled}
-                      onClick={() => toggleLandmark(lm.id)}
-                      style={ui.btn(picked ? 'primary' : 'ghost', disabled)}
-                    >
-                      {picked ? '✅' : '🏷️'} {lm.label}
-                    </button>
-                  </Tooltip>
-                )
-              })}
-            </div>
-
-            <div style={{ opacity: 0.78, fontSize: 13, marginTop: 10 }}>
-              After confirmation, landmarks are locked for this match.
-            </div>
-          </div>
-        )}
-
+        <RacePickLandmarksSection
+          loading={loading}
+          landmarksEnabled={landmarksEnabled}
+          landmarkBanned={landmarkBanned}
+          landmarksRandomCount={landmarksRandomCount}
+          landmarksDrawn={landmarksDrawn}
+          localPickedLandmarks={localPickedLandmarks}
+          setLocalPickedLandmarks={setLocalPickedLandmarks}
+          toggleLandmark={toggleLandmark}
+          onSetLandmarksManual={onSetLandmarksManual}
+          ui={ui}
+        />
 
         {error && <div style={ui.errorBox}>Error: {error}</div>}
 
-        <div style={{ display: 'grid', gap: 14 }}>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            {players.map((p) => {
-              const rk = raceKey(p.race)
-              const hex = RACE_COLOR[rk] ?? '#dc2626'
-              return (
-                <span key={p.playerId} style={ui.badgeStrong(hex)}>
-                  {p.playerName}: <b>{raceLabel(p.race)}</b>
-                </span>
-              )
-            })}
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {pool.map((rk) => {
-              const icon = RACE_ICON[rk]
-              const hex = RACE_COLOR[rk] ?? '#dc2626'
-
-              const disabled = loading || taken.has(rk) || !selectedPlayer || !!selectedPlayer.race
-              const pickedBySomeone = taken.has(rk)
-
-              return (
-                <button
-                  key={rk}
-                  disabled={disabled}
-                  onClick={() => selectedPlayer && onPick(selectedPlayer.playerId, rk)}
-                  style={{
-                    ...ui.btn('race', disabled, hex),
-                    padding: 14,
-                    borderRadius: 18,
-                    display: 'grid',
-                    gap: 10,
-                    justifyItems: 'center',
-                    opacity: pickedBySomeone ? 0.55 : 1,
-                  }}
-                  title={pickedBySomeone ? 'Already picked' : `Pick ${rk}`}
-                >
-                  <img
-                    src={icon}
-                    alt={rk}
-                    style={{
-                      width: 64,
-                      height: 64,
-                      objectFit: 'contain',
-                      background: 'rgba(255,255,255,0.08)',
-                      borderRadius: 14,
-                      padding: 8,
-                      border: `1px solid rgba(255,255,255,0.14)`,
-                    }}
-                  />
-                  <div style={{ fontWeight: 1000 }}>{rk}</div>
-                </button>
-              )
-            })}
-          </div>
-
-          <div style={{ opacity: 0.78, fontSize: 13 }}>
-            Select a player, then pick a race.
-            {landmarksEnabled && (landmarksDrawn?.length ?? 0) === 0
-              ? ' Landmarks are required before the match can start.'
-              : ' Once both players have a race, you will automatically enter the match view.'}
-          </div>
-        </div>
+        <RacePickRacePool
+          players={players}
+          loading={loading}
+          taken={taken}
+          pool={pool}
+          selectedPlayer={selectedPlayer}
+          onPick={onPick}
+          landmarksEnabled={landmarksEnabled}
+          landmarksDrawn={landmarksDrawn}
+          ui={ui}
+        />
       </div>
     </div>
   )
