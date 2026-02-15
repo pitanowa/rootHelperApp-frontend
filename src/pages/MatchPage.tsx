@@ -118,7 +118,7 @@ type LandmarksStateResponse = {
     drawn: string[]
 }
 
-type BtnVariant = 'primary' | 'ghost' | 'danger' | 'race'
+type BtnVariant = 'primary' | 'ghost' | 'danger' | 'race' | 'cards'
 
 const ui = {
     page: {
@@ -300,41 +300,61 @@ const ui = {
         ({
             padding: '10px 12px',
             borderRadius: 14,
+
             border:
                 variant === 'danger'
                     ? '1px solid rgba(248,113,113,0.35)'
                     : variant === 'primary'
                         ? '1px solid rgba(59,130,246,0.35)'
-                        : variant === 'race'
-                            ? `1px solid ${mixRgba(hex ?? '#ffffff', 0.30)}`
-                            : '1px solid rgba(255,255,255,0.14)',
+                        : variant === 'cards'
+                            ? '1px solid rgba(124, 11, 11, 0.4)'
+                            : variant === 'race'
+                                ? `1px solid ${mixRgba(hex ?? '#ffffff', 0.30)}`
+                                : '1px solid rgba(255,255,255,0.14)',
             background:
                 variant === 'danger'
                     ? 'linear-gradient(135deg, rgba(220,38,38,0.88), rgba(127,29,29,0.88))'
                     : variant === 'primary'
                         ? 'linear-gradient(135deg, rgba(59,130,246,0.92), rgba(99,102,241,0.92))'
-                        : variant === 'race'
-                            ? `linear-gradient(135deg, ${mixRgba(hex ?? '#ffffff', 0.22)}, rgba(255,255,255,0.04))`
-                            : 'rgba(255,255,255,0.05)',
-            color: variant === 'race' ? readableTextOn(hex ?? '#ffffff') : 'rgba(255,255,255,0.92)',
+                        : variant === 'cards'
+                            ? 'linear-gradient(135deg, rgba(109, 15, 21, 0.92), rgba(0, 0, 0, 0.92))'
+                            : variant === 'race'
+                                ? `linear-gradient(135deg, ${mixRgba(hex ?? '#ffffff', 0.22)}, rgba(255,255,255,0.04))`
+                                : 'rgba(255,255,255,0.05)',
+
+            color:
+                variant === 'cards'
+                    ? 'rgba(255,255,255,0.94)'
+                    : variant === 'race'
+                        ? readableTextOn(hex ?? '#ffffff')
+                        : 'rgba(255,255,255,0.92)',
+
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.55 : 1,
             fontWeight: 1000,
             letterSpacing: 0.2,
+
             boxShadow:
                 variant === 'danger'
                     ? '0 16px 34px rgba(220,38,38,0.22)'
                     : variant === 'primary'
-                        ? '0 16px 34px rgba(59,130,246,0.22)'
-                        : variant === 'race'
-                            ? `0 16px 34px ${mixRgba(hex ?? '#ffffff', 0.14)}`
-                            : 'none',
-            transition: 'transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease',
+                        ? '0 16px 34px rgba(246, 59, 100, 0.22)'
+                        : variant === 'cards'
+                            ? '0 16px 34px rgba(0, 0, 0, 0.25)'
+                            : variant === 'race'
+                                ? `0 16px 34px ${mixRgba(hex ?? '#ffffff', 0.14)}`
+                                : 'none',
+
+            transition: 'transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease, filter 120ms ease',
             userSelect: 'none',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
             whiteSpace: 'nowrap',
+            position: 'relative',
+
+            // mały “shine”
+            overflow: 'hidden',
         }) as const,
 
     // overlays / modal (setup)
@@ -348,6 +368,14 @@ const ui = {
         padding: 18,
         zIndex: 2147483647,
     } as const,
+    btnInline: (variant: BtnVariant, disabled: boolean, hex?: string) =>
+        ({
+            ...ui.btn(variant, disabled, hex),
+            width: 'fit-content',
+            alignSelf: 'flex-start',
+            padding: '8px 12px',
+            borderRadius: 14,
+        }) as const,
 
     modal: (hex: string) =>
         ({
@@ -1772,32 +1800,6 @@ export default function MatchPage() {
 
                 </div>
 
-                {state?.landmarksEnabled && (
-                    <div style={{ ...ui.panel, margin: '0 auto 14px' }}>
-                        <div style={ui.panelHead}>
-                            <div>🏷️ Landmarks</div>
-                            <span style={ui.badge}>
-                                banned: <b>{state.landmarkBanned ?? '—'}</b> • draw:{' '}
-                                <b>{(state.landmarksDrawn?.length ?? state.landmarksRandomCount) ?? '—'}</b>
-                            </span>
-                        </div>
-
-                        <div style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {(state.landmarksDrawn ?? []).map((id) => (
-                                <Tooltip
-                                    key={id}
-                                    placement="bottom"
-                                    content={lmTooltipContent(id as LandmarkId)}
-                                >
-                                    <span style={{ ...ui.badge, cursor: 'help' }}>
-                                        🏷️ {lmLabel(id as LandmarkId)}
-                                    </span>
-                                </Tooltip>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {/* TOP PAGE ACTIONS */}
                 {state && (
                     <div style={ui.actionsTop}>
@@ -2156,18 +2158,40 @@ export default function MatchPage() {
                                 </div>
                             </div>
                             <button
-                                style={ui.btn('ghost', loading)}
                                 disabled={loading}
                                 onClick={() => setCardsOpen(true)}
+                                style={{
+                                    ...ui.btn('cards', loading),
+
+                                    width: '100%',
+                                    height: 56,
+
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+
+                                    fontSize: 20,
+                                    fontWeight: 1000,
+                                    letterSpacing: 1.2,
+
+                                    textTransform: 'uppercase',
+
+                                    transition:
+                                        'transform 140ms ease, box-shadow 140ms ease, filter 140ms ease',
+                                }}
                                 onMouseEnter={(e) => {
                                     if (loading) return
-                                    e.currentTarget.style.transform = 'translateY(-1px)'
+                                    e.currentTarget.style.transform = 'translateY(-2px)'
+                                    e.currentTarget.style.boxShadow =
+                                        '0 26px 70px rgba(0,0,0,0.65), 0 0 90px rgba(59,130,246,0.28)'
                                 }}
                                 onMouseLeave={(e) => {
                                     e.currentTarget.style.transform = 'translateY(0)'
+                                    e.currentTarget.style.boxShadow =
+                                        '0 20px 50px rgba(0,0,0,0.55), 0 0 60px rgba(59,130,246,0.18)'
                                 }}
                             >
-                                Show cards
+                                CARD LIST
                             </button>
                         </div>
                     </div>
@@ -2224,6 +2248,33 @@ export default function MatchPage() {
                         />
                     ) : null}
                 </MatchSummaryModal>
+
+                
+                {state?.landmarksEnabled && (
+                    <div style={{ ...ui.panel, margin: '0 auto 14px' }}>
+                        <div style={ui.panelHead}>
+                            <div>Landmarks</div>
+                            <span style={ui.badge}>
+                                banned: <b>{state.landmarkBanned ?? '—'}</b> • draw:{' '}
+                                <b>{(state.landmarksDrawn?.length ?? state.landmarksRandomCount) ?? '—'}</b>
+                            </span>
+                        </div>
+
+                        <div style={{ padding: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {(state.landmarksDrawn ?? []).map((id) => (
+                                <Tooltip
+                                    key={id}
+                                    placement="top"
+                                    content={lmTooltipContent(id as LandmarkId)}
+                                >
+                                    <span style={{ ...ui.badge, cursor: 'help' }}>
+                                        {lmLabel(id as LandmarkId)}
+                                    </span>
+                                </Tooltip>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

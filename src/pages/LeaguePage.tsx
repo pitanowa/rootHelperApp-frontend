@@ -6,7 +6,6 @@ import { MatchSummaryModal } from "../components/modals/MatchSummary"
 import { MatchSummaryView } from "../components/match/MatchSummaryView"
 import { RACE_LABEL } from "../constants/races"
 import battlefield from "../assets/backgrounds/root_match_summary.png";
-import { type LandmarkId, lmLabel, lmTooltipContent } from '../data/landmarks'
 
 import cats from '../assets/races/root_cats.png'
 import dynasty from '../assets/races/root_dynasty.png'
@@ -924,12 +923,6 @@ export default function LeaguePage() {
         } finally {
             setLoading(false)
         }
-    }
-
-    function matchTitle(m: MatchListItem) {
-        const mode = m.ranked ? 'RANKED' : 'CASUAL'
-        const icon = m.status === 'FINISHED' ? '✅' : m.status === 'DRAFT' ? '🧪' : '⚔️'
-        return `${icon} Match #${m.id} • ${mode} • ${m.timerSecondsInitial}s`
     }
 
     return (

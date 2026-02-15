@@ -78,3 +78,6 @@ button:focus-visible {
   }
 }
 
+button:hover .cards-shine {
+  transform: translateX(120%);
+}
