@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { apiGet, apiPost } from '../api'
+import { apiPost } from '../api'
 import RaceDraftView from './RaceDraftPage'
 import { RACE_LABEL } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
@@ -23,35 +23,10 @@ import knights from '../assets/races/root_knights.png'
 import kingdom from '../assets/races/root_kingdom.png'
 import rats from '../assets/races/root_rats.png'
 import { CARDS } from '../data/cards'
-import type { DraftState, MatchPlayerState, MatchState } from '../features/matches/types'
+import type { DraftState, MatchPlayerState } from '../features/matches/types'
 import MatchPlayersSection from '../features/matches/components/MatchPlayersSection'
 import { useCardsFilters } from '../features/matches/hooks/useCardsFilters'
-
-type MatchSummary = {
-    matchId: number
-    leagueId: number
-    ranked: boolean
-    finished: boolean
-    description: string | null
-    players: {
-        playerId: number
-        playerName: string
-        raceId: string | null
-        raceLabel?: string | null
-        points: number
-        roots: number
-    }[]
-    landmarks: { id: string; label: string }[]
-    rankingAfter: {
-        position: number
-        playerId: number
-        playerName: string
-        totalPoints: number
-        totalRoots: number
-        gamesPlayed: number
-        wins: number
-    }[]
-}
+import { useMatchController } from '../features/matches/hooks/useMatchController'
 
 function clamp(n: number, a: number, b: number) {
     return Math.max(a, Math.min(b, n))
@@ -1103,29 +1078,46 @@ export default function MatchPage() {
     const { matchId } = useParams()
     const mid = Number(matchId)
 
-    const [state, setState] = useState<MatchState | null>(null)
-    const [draft, setDraft] = useState<DraftState | null>(null)
-
-    const [localTime, setLocalTime] = useState<Record<number, number>>({})
-    const [runningPlayerId, setRunningPlayerId] = useState<number | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    const alertedRef = useRef<Record<number, boolean>>({})
-    const lastSaveRef = useRef<Record<number, number>>({})
-    const loadInFlightRef = useRef(false)
+    const {
+        state,
+        setState,
+        draft,
+        localTime,
+        runningPlayerId,
+        loading,
+        error,
+        setError,
+        scoreInput,
+        setScoreInput,
+        summaryOpen,
+        setSummaryOpen,
+        summary,
+        summaryDesc,
+        setSummaryDesc,
+        summarySaving,
+        presetSeconds,
+        matchStarted,
+        load,
+        startMatch,
+        finish,
+        setRunning,
+        stopRunning,
+        addMinute,
+        removeMinute,
+        addSecond,
+        removeSecond,
+        setScoreAbsolute,
+        refreshTimer,
+        saveSummaryAndExit,
+    } = useMatchController({
+        mid,
+        getRaceMap: lsGetRaceMap,
+        playAlarm,
+    })
 
     const [flowStage, setFlowStage] = useState<FlowStage>('NONE')
     const [setupIndex, setSetupIndex] = useState(0)
 
-    const [scoreInput, setScoreInput] = useState<Record<number, string>>({})
-
-    const [summaryOpen, setSummaryOpen] = useState(false)
-    const [summary, setSummary] = useState<MatchSummary | null>(null)
-    const [summaryDesc, setSummaryDesc] = useState('')
-    const [summarySaving, setSummarySaving] = useState(false)
-
-    // ✅ Cards modal
     const {
         cardsOpen,
         setCardsOpen,
@@ -1142,16 +1134,14 @@ export default function MatchPage() {
         filteredCards,
         resetCardFilters,
     } = useCardsFilters(CARDS)
+
     const prevDraftPhaseRef = useRef<DraftState['phase'] | null>(null)
     const prevDraftStatusRef = useRef<DraftState['status'] | null>(null)
-
-
-    const presetSeconds = state?.timerSecondsInitial ?? 180
 
     const playersInMatchOrder = useMemo(() => {
         if (!state) return []
 
-        // ✅ DRAFT: zostaje jak było (reverse)
+        // DRAFT keeps backend pick order (reversed for display)
         const draftOrder = draft?.pickOrder?.length ? [...draft.pickOrder].reverse() : null
         if (draftOrder) {
             const byId = new Map(state.players.map((p) => [p.playerId, p]))
@@ -1161,7 +1151,7 @@ export default function MatchPage() {
             return [...arranged, ...rest]
         }
 
-        // ✅ MANUAL PICK: kolejność = kolejność przypisywania na froncie
+        // Manual race-pick order is also persisted locally and displayed reversed.
         if (state.raceDraftEnabled === false) {
             const manual = [...lsGetJson<number[]>(LS_MANUAL_ORDER(mid), [])].reverse()
             if (manual.length) {
@@ -1175,110 +1165,6 @@ export default function MatchPage() {
 
         return [...state.players]
     }, [state, draft?.pickOrder, mid])
-    async function load() {
-        if (!Number.isFinite(mid)) return
-        if (loadInFlightRef.current) return
-        loadInFlightRef.current = true
-
-        setLoading(true)
-        setError(null)
-
-        try {
-            const s = await apiGet<MatchState>(`/api/matches/${mid}`)
-
-            // ✅ zbuduj nextState na bazie tego co przyszło z backendu (s), a nie na bazie "prev"
-            const raceMap = lsGetRaceMap(mid)
-
-            let nextState: MatchState = {
-                ...s,
-                players: s.players.map((p) => ({
-                    ...p,
-                    race: raceMap[p.playerId] ?? p.race ?? null,
-                })),
-            }
-
-            // score input
-            setScoreInput((prev) => {
-                const next = { ...prev }
-                for (const p of s.players) {
-                    if (next[p.playerId] === undefined) next[p.playerId] = String(p.score ?? 0)
-                }
-                return next
-            })
-
-            // local time
-            setLocalTime((prev) => {
-                const next = { ...prev }
-                for (const p of s.players) {
-                    if (next[p.playerId] === undefined) next[p.playerId] = p.timeLeftSeconds
-                }
-                return next
-            })
-
-            if (s.raceDraftEnabled) {
-                try {
-                    const d = await apiGet<DraftState>(`/api/matches/${mid}/draft`)
-                    setDraft(d)
-
-                    const raceByPlayerId = new Map(d.assignments.map((a) => [a.playerId, a.race]))
-                    nextState = {
-                        ...nextState,
-                        players: nextState.players.map((p) => ({
-                            ...p,
-                            race: p.race ?? raceByPlayerId.get(p.playerId) ?? null,
-                        })),
-                    }
-                } catch {
-                    setDraft(null)
-                }
-            } else {
-                setDraft(null)
-            }
-
-            setState(nextState)
-
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to load match')
-        } finally {
-            setLoading(false)
-            loadInFlightRef.current = false
-        }
-    }
-
-    useEffect(() => {
-        load()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mid])
-
-    // local countdown for running player (stops at 0)
-    useEffect(() => {
-        if (runningPlayerId == null) return
-        const id = window.setInterval(() => {
-            setLocalTime((prev) => {
-                const cur = prev[runningPlayerId]
-                if (cur == null || cur <= 0) return prev
-                const nextVal = cur - 1
-                if (nextVal <= 0) {
-                    window.setTimeout(() => setRunningPlayerId(null), 0)
-                    return { ...prev, [runningPlayerId]: 0 }
-                }
-                return { ...prev, [runningPlayerId]: nextVal }
-            })
-        }, 1000)
-        return () => window.clearInterval(id)
-    }, [runningPlayerId])
-
-    // alarm when any player hits 0
-    useEffect(() => {
-        if (!state) return
-        for (const p of state.players) {
-            const t = localTime[p.playerId] ?? p.timeLeftSeconds
-            if (t <= 0 && !alertedRef.current[p.playerId]) {
-                alertedRef.current[p.playerId] = true
-                playAlarm()
-            }
-        }
-    }, [state, localTime])
 
     useEffect(() => {
         if (!draft) return
@@ -1334,162 +1220,6 @@ export default function MatchPage() {
             })()
     }, [state, mid])
 
-
-    async function startMatch() {
-        setLoading(true)
-        setError(null)
-        try {
-            await apiPost<void>(`/api/matches/${mid}/start`)
-            await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to start match')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    async function saveTime(playerId: number, timeLeftSeconds: number) {
-        const now = Date.now()
-        const last = lastSaveRef.current[playerId] ?? 0
-        if (now - last < 500) return
-        lastSaveRef.current[playerId] = now
-
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, {
-            timeLeftSeconds: Math.max(0, Math.floor(timeLeftSeconds)),
-        })
-    }
-
-    async function setRunning(playerId: number) {
-        const t = localTime[playerId] ?? state?.players.find((x) => x.playerId === playerId)?.timeLeftSeconds ?? 0
-        if (t <= 0) return
-
-        if (runningPlayerId != null && runningPlayerId !== playerId) {
-            const prevT = localTime[runningPlayerId]
-            if (prevT != null) {
-                try {
-                    await saveTime(runningPlayerId, prevT)
-                } catch { }
-            }
-        }
-        setRunningPlayerId(playerId)
-    }
-
-    async function stopRunning(playerId: number) {
-        const t = localTime[playerId]
-        setRunningPlayerId((prev) => (prev === playerId ? null : prev))
-        if (t == null) return
-        try {
-            await saveTime(playerId, t)
-        } catch { }
-    }
-
-    async function addMinute(playerId: number) {
-        setLocalTime((prev) => ({ ...prev, [playerId]: (prev[playerId] ?? 0) + 60 }))
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: 60 })
-        } catch { }
-    }
-
-    async function removeMinute(playerId: number) {
-        setLocalTime((prev) => ({ ...prev, [playerId]: Math.max(0, (prev[playerId] ?? 0) - 60) }))
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: -60 })
-        } catch { }
-    }
-
-    async function addSecond(playerId: number) {
-        setLocalTime((prev) => ({ ...prev, [playerId]: (prev[playerId] ?? 0) + 1 }))
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: 1 })
-        } catch { }
-    }
-
-    async function removeSecond(playerId: number) {
-        setLocalTime((prev) => ({ ...prev, [playerId]: Math.max(0, (prev[playerId] ?? 0) - 1) }))
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: -1 })
-        } catch { }
-    }
-
-
-    async function scoreDelta(playerId: number, delta: number) {
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/score`, { delta })
-            await load()
-        } catch { }
-    }
-
-    async function setScoreAbsolute(playerId: number, targetScore: number) {
-        const current = state?.players.find((p) => p.playerId === playerId)?.score ?? 0
-        const delta = targetScore - current
-        if (delta === 0) return
-        await scoreDelta(playerId, delta)
-    }
-
-
-    async function refreshTimer(playerId: number) {
-        // ✅ natychmiast w UI
-        setRunningPlayerId((prev) => (prev === playerId ? null : prev))
-        alertedRef.current[playerId] = false
-        setLocalTime((prev) => ({ ...prev, [playerId]: presetSeconds }))
-
-        // ✅ zapis do backendu
-        try {
-            await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, {
-                timeLeftSeconds: presetSeconds,
-            })
-            await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to refresh timer')
-        }
-    }
-    async function openSummaryModal() {
-        const s = await apiGet<MatchSummary>(`/api/matches/${mid}/summary`)
-        setSummary(s)
-        setSummaryDesc((s.description ?? '').toString())
-        setSummaryOpen(true)
-    }
-
-    async function saveSummaryAndExit() {
-        if (!summary) return
-        setSummarySaving(true)
-        try {
-            await apiPost<void>(`/api/matches/${mid}/description`, { description: summaryDesc })
-            // po zapisie wracamy do ligi
-            window.location.href = `/leagues/${summary.leagueId}`
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to save description')
-        } finally {
-            setSummarySaving(false)
-        }
-    }
-
-
-    async function finish() {
-        const ok = confirm('Finish match? This will update league standings.')
-        if (!ok) return
-
-        setLoading(true)
-        try {
-            if (runningPlayerId != null) {
-                const t = localTime[runningPlayerId]
-                setRunningPlayerId(null)
-                if (t != null) {
-                    try {
-                        await saveTime(runningPlayerId, t)
-                    } catch { }
-                }
-            }
-            await apiPost<void>(`/api/matches/${mid}/finish`)
-            await load()
-            await openSummaryModal()
-
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const matchStarted = state?.status === 'RUNNING'
 
     // BLOCKING DRAFT VIEW
     if (state?.raceDraftEnabled && draft && draft.status === 'DRAFTING') {
