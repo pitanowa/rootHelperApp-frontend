@@ -38,6 +38,9 @@ export type MatchState = {
   status: string
   timerSecondsInitial: number
   raceDraftEnabled?: boolean
+  landmarksEnabled?: boolean
+  landmarkBanned?: string | null
+  landmarksRandomCount?: number | null
+  landmarksDrawn?: string[]
   players: MatchPlayerState[]
 }
-

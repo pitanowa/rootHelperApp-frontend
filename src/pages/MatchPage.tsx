@@ -22,29 +22,10 @@ import riverfolk from '../assets/races/root_riverfolk.png'
 import knights from '../assets/races/root_knights.png'
 import kingdom from '../assets/races/root_kingdom.png'
 import rats from '../assets/races/root_rats.png'
-import { CARDS, type CardDef, type Clearing, type CraftType, type Item } from '../data/cards'
-
-type MatchPlayerState = {
-    playerId: number
-    playerName: string
-    score: number
-    timeLeftSeconds: number
-    race?: string | null
-}
-
-type MatchState = {
-    matchId: number
-    leagueId: number
-    groupId: number
-    status: string
-    timerSecondsInitial: number
-    raceDraftEnabled?: boolean
-    players: MatchPlayerState[]
-    landmarksEnabled?: boolean
-    landmarkBanned?: string | null
-    landmarksRandomCount?: number | null
-    landmarksDrawn?: string[]
-}
+import { CARDS } from '../data/cards'
+import type { DraftState, MatchPlayerState, MatchState } from '../features/matches/types'
+import MatchPlayersSection from '../features/matches/components/MatchPlayersSection'
+import { useCardsFilters } from '../features/matches/hooks/useCardsFilters'
 
 type MatchSummary = {
     matchId: number
@@ -70,23 +51,6 @@ type MatchSummary = {
         gamesPlayed: number
         wins: number
     }[]
-}
-
-type DraftAssignment = {
-    playerId: number
-    race: string
-}
-
-type DraftState = {
-    matchId: number
-    status: 'DRAFTING' | 'FINISHED'
-    phase: 'BAN' | 'PICK'
-    currentPickIndex: number
-    currentPlayerId: number | null
-    pickOrder: number[]
-    pool: string[]
-    bannedRaces: string[]
-    assignments: DraftAssignment[]
 }
 
 function clamp(n: number, a: number, b: number) {
@@ -952,13 +916,6 @@ const ui = {
 
 }
 
-function fmt(secs: number) {
-    const s = Math.max(0, Math.floor(secs))
-    const m = Math.floor(s / 60)
-    const r = s % 60
-    return `${m}:${String(r).padStart(2, '0')}`
-}
-
 function normalizeRace(race?: string | null) {
     if (!race) return ''
     return race
@@ -1154,8 +1111,6 @@ export default function MatchPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const [activeIndex, setActiveIndex] = useState(0)
-
     const alertedRef = useRef<Record<number, boolean>>({})
     const lastSaveRef = useRef<Record<number, number>>({})
     const loadInFlightRef = useRef(false)
@@ -1171,47 +1126,22 @@ export default function MatchPage() {
     const [summarySaving, setSummarySaving] = useState(false)
 
     // ✅ Cards modal
-    const [cardsOpen, setCardsOpen] = useState(false)
-    const [cardsSearch, setCardsSearch] = useState('')
-    const [fClearings, setFClearings] = useState<Record<Clearing, boolean>>({
-        MOUSE: false,
-        FOX: false,
-        RABBIT: false,
-        BIRD: false,
-    })
-    const [fCraft, setFCraft] = useState<Record<CraftType, boolean>>({
-        POINTS: false,
-        ABILITY: false,
-        DOMINANCE: false,
-    })
-    const [fItems, setFItems] = useState<Record<Item, boolean>>({
-        SACK: false,
-        BOOT: false,
-        SWORD: false,
-        CROSSBOW: false,
-        HAMMER: false,
-        TEAPOT: false,
-        COIN: false,
-        TORCH: false,
-    })
-    const [previewCard, setPreviewCard] = useState<CardDef | null>(null)
-
-    function resetCardFilters() {
-        setCardsSearch('')
-        setFClearings({ MOUSE: false, FOX: false, RABBIT: false, BIRD: false })
-        setFCraft({ POINTS: false, ABILITY: false, DOMINANCE: false })
-        setFItems({
-            SACK: false,
-            BOOT: false,
-            SWORD: false,
-            CROSSBOW: false,
-            HAMMER: false,
-            TEAPOT: false,
-            COIN: false,
-            TORCH: false,
-        })
-    }
-
+    const {
+        cardsOpen,
+        setCardsOpen,
+        cardsSearch,
+        setCardsSearch,
+        fClearings,
+        setFClearings,
+        fCraft,
+        setFCraft,
+        fItems,
+        setFItems,
+        previewCard,
+        setPreviewCard,
+        filteredCards,
+        resetCardFilters,
+    } = useCardsFilters(CARDS)
     const prevDraftPhaseRef = useRef<DraftState['phase'] | null>(null)
     const prevDraftStatusRef = useRef<DraftState['status'] | null>(null)
 
@@ -1245,15 +1175,6 @@ export default function MatchPage() {
 
         return [...state.players]
     }, [state, draft?.pickOrder, mid])
-
-
-    useEffect(() => {
-        if (!playersInMatchOrder.length) return
-        setActiveIndex((prev) => Math.min(Math.max(prev, 0), playersInMatchOrder.length - 1))
-    }, [playersInMatchOrder.length])
-
-    const activePlayer = playersInMatchOrder[activeIndex] ?? null
-
     async function load() {
         if (!Number.isFinite(mid)) return
         if (loadInFlightRef.current) return
@@ -1569,32 +1490,6 @@ export default function MatchPage() {
     }
 
     const matchStarted = state?.status === 'RUNNING'
-    const filteredCards = useMemo(() => {
-        const search = cardsSearch.trim().toLowerCase()
-
-        const anyClearing = Object.values(fClearings).some(Boolean)
-        const anyCraft = Object.values(fCraft).some(Boolean)
-        const anyItem = Object.values(fItems).some(Boolean)
-
-        return CARDS.filter((c) => {
-            if (search) {
-                const okName =
-                    c.name.toLowerCase().includes(search) ||
-                    c.id.toLowerCase().includes(search)
-                if (!okName) return false
-            }
-
-            if (anyClearing && !fClearings[c.clearing]) return false
-            if (anyCraft && !fCraft[c.craftType]) return false
-
-            if (anyItem) {
-                if (!c.item) return false
-                if (!fItems[c.item]) return false
-            }
-
-            return true
-        })
-    }, [cardsSearch, fClearings, fCraft, fItems])
 
     // BLOCKING DRAFT VIEW
     if (state?.raceDraftEnabled && draft && draft.status === 'DRAFTING') {
@@ -1869,329 +1764,30 @@ export default function MatchPage() {
                 {!state ? (
                     <div style={{ opacity: 0.78, color: 'rgba(255,255,255,0.72)' }}>{loading ? 'Loading…' : 'Match not found'}</div>
                 ) : (
-                    <div style={ui.layout}>
-                        {/* CENTER: ALL PLAYER CARDS */}
-                        <div style={ui.centerWrap}>
-                            <div style={{ width: 'min(980px, 100%)' }}>
-                                <div style={ui.cardsGrid}>
-                                    {playersInMatchOrder.map((p) => {
-                                        const rk = raceKey(p.race)
-                                        const hex = RACE_COLOR[rk] ?? '#dc2626'
-                                        const icon = RACE_ICON[rk] ?? ''
-
-                                        const t = localTime[p.playerId] ?? p.timeLeftSeconds
-                                        const timeUp = t <= 0
-                                        const isRunning = runningPlayerId === p.playerId
-                                        const matchStarted = state?.status === 'RUNNING'
-
-                                        return (
-                                            <div key={p.playerId} style={ui.playerCard(hex, timeUp, isRunning)}>
-                                                {/* TOP */}
-                                                <div style={ui.cardTopRow}>
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={ui.smallName} title={p.playerName}>
-                                                            {p.playerName}
-                                                        </div>
-
-                                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 6 }}>
-                                                            <span style={ui.badgeStrong(hex)}>{raceLabel(p.race)}</span>
-
-                                                            {timeUp ? (
-                                                                <span style={ui.badgeStrong('#ef4444')}>TIME UP</span>
-                                                            ) : isRunning ? (
-                                                                <span style={ui.badgeStrong('#22c55e')}>RUNNING</span>
-                                                            ) : (
-                                                                <span style={ui.badge}>STOPPED</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {icon ? (
-                                                        <img
-                                                            src={icon}
-                                                            alt={raceLabel(p.race)}
-                                                            title={raceLabel(p.race)}
-                                                            style={{ ...ui.heroIcon(hex), width: 56, height: 56, padding: 8, borderRadius: 16 }}
-                                                        />
-                                                    ) : null}
-                                                </div>
-
-                                                {/* TIMER + QUICK TIME CONTROLS */}
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={ui.timerRow}>
-                                                            <div>
-                                                                <div style={ui.smallTimer(timeUp)}>{fmt(t)}</div>
-                                                                <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)', marginTop: 4 }}>
-                                                                    time left
-                                                                </div>
-                                                            </div>
-
-                                                            {/* ✅ TIME BUTTONS */}
-                                                            <div style={ui.timeControls}>
-                                                                <button
-                                                                    onClick={() => removeSecond(p.playerId)}
-                                                                    disabled={loading || !matchStarted}
-                                                                    style={ui.timeBtn('sub', loading || !matchStarted)}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (loading || !matchStarted) return
-                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
-                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.transform = 'translateY(0)'
-                                                                        e.currentTarget.style.filter = 'none'
-                                                                    }}
-                                                                    title="-1 second"
-                                                                >
-                                                                    −1s
-                                                                </button>
-
-                                                                <button
-                                                                    onClick={() => addSecond(p.playerId)}
-                                                                    disabled={loading || !matchStarted}
-                                                                    style={ui.timeBtn('add', loading || !matchStarted)}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (loading || !matchStarted) return
-                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
-                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.transform = 'translateY(0)'
-                                                                        e.currentTarget.style.filter = 'none'
-                                                                    }}
-                                                                    title="+1 second"
-                                                                >
-                                                                    +1s
-                                                                </button>
-
-                                                                <button
-                                                                    onClick={() => removeMinute(p.playerId)}
-                                                                    disabled={loading || !matchStarted}
-                                                                    style={ui.timeBtn('sub', loading || !matchStarted)}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (loading || !matchStarted) return
-                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
-                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.transform = 'translateY(0)'
-                                                                        e.currentTarget.style.filter = 'none'
-                                                                    }}
-                                                                    title="-1 minute"
-                                                                >
-                                                                    −1m
-                                                                </button>
-
-                                                                <button
-                                                                    onClick={() => addMinute(p.playerId)}
-                                                                    disabled={loading || !matchStarted}
-                                                                    style={ui.timeBtn('add', loading || !matchStarted)}
-                                                                    onMouseEnter={(e) => {
-                                                                        if (loading || !matchStarted) return
-                                                                        e.currentTarget.style.transform = 'translateY(-1px)'
-                                                                        e.currentTarget.style.filter = 'brightness(1.08)'
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.style.transform = 'translateY(0)'
-                                                                        e.currentTarget.style.filter = 'none'
-                                                                    }}
-                                                                    title="+1 minute"
-                                                                >
-                                                                    +1m
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)' }}>score</div>
-                                                        <div style={{ fontSize: 26, fontWeight: 1000, fontVariantNumeric: 'tabular-nums' }}>{p.score}</div>
-                                                    </div>
-                                                </div>
-
-                                                {/* ACTIONS */}
-                                                <div style={ui.miniActionsRow}>
-                                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                                        <input
-                                                            type="number"
-                                                            value={scoreInput[p.playerId] ?? String(p.score ?? 0)}
-                                                            disabled={loading || !matchStarted}
-                                                            onChange={(e) =>
-                                                                setScoreInput((prev) => ({ ...prev, [p.playerId]: e.target.value }))
-                                                            }
-                                                            onKeyDown={async (e) => {
-                                                                if (e.key !== 'Enter') return
-                                                                const raw = (scoreInput[p.playerId] ?? '').trim()
-                                                                if (raw === '') return
-                                                                const n = Number(raw)
-                                                                if (!Number.isFinite(n)) return
-                                                                await setScoreAbsolute(p.playerId, Math.trunc(n))
-                                                            }}
-                                                            style={{
-                                                                width: 80,
-                                                                padding: '10px 12px',
-                                                                borderRadius: 14,
-                                                                border: '1px solid rgba(255,255,255,0.14)',
-                                                                background: 'rgba(255,255,255,0.06)',
-                                                                color: 'rgba(255,255,255,0.92)',
-                                                                outline: 'none',
-                                                                fontWeight: 900,
-                                                                fontVariantNumeric: 'tabular-nums',
-                                                            }}
-                                                            title="Wpisz docelowy wynik i naciśnij Enter"
-                                                        />
-
-                                                        <button
-                                                            onClick={async () => {
-                                                                const raw = (scoreInput[p.playerId] ?? '').trim()
-                                                                if (raw === '') return
-                                                                const n = Number(raw)
-                                                                if (!Number.isFinite(n)) return
-                                                                await setScoreAbsolute(p.playerId, Math.trunc(n))
-                                                            }}
-                                                            disabled={loading || !matchStarted}
-                                                            style={ui.btn('ghost', loading || !matchStarted)}
-                                                        >
-                                                            Set
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => refreshTimer(p.playerId)}
-                                                            disabled={loading || !matchStarted}
-                                                            style={ui.btn('ghost', loading || !matchStarted)}
-                                                            title={`Set timer back to ${presetSeconds}s`}
-                                                        >
-                                                            ⟳ Timer
-                                                        </button>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                                                        {!isRunning ? (
-                                                            <button
-                                                                onClick={() => setRunning(p.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={{
-                                                                    ...ui.btn('race', loading || !matchStarted, hex),
-                                                                    color: 'rgba(255,255,255,0.92)',
-                                                                }}
-                                                            >
-                                                                Start
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => stopRunning(p.playerId)}
-                                                                disabled={loading || !matchStarted}
-                                                                style={ui.btn('danger', loading || !matchStarted)}
-                                                            >
-                                                                Stop
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RIGHT: SCOREBOARD*/}
-                        <div style={{ display: 'grid', gap: 12 }}>
-
-                            <div style={ui.panel}>
-                                <div style={ui.panelHead}>
-                                    <div>Scoreboard</div>
-                                    {activePlayer && (
-                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                                            <span style={ui.badgeStrong('#dc2626')}>
-                                                Active: <b>{activePlayer.playerName}</b>
-                                            </span>
-
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div style={ui.tableHeadRow}>
-                                    <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78 }}>Player / Race</div>
-                                    <div style={{ ...ui.tableCell, fontWeight: 1000, opacity: 0.78, textAlign: 'right' }}>Score</div>
-                                </div>
-
-                                <div style={ui.tableWrap}>
-                                    {playersInMatchOrder.map((p) => {
-                                        const rk = raceKey(p.race)
-                                        const icon = RACE_ICON[rk] ?? ''
-                                        const hex = RACE_COLOR[rk] ?? '#dc2626'
-                                        const isActiveRow = runningPlayerId === p.playerId
-
-                                        return (
-                                            <div
-                                                key={p.playerId}
-                                                style={ui.scoreboardRow(hex, isActiveRow)}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.background = mixRgba(hex, isActiveRow ? 0.20 : 0.14)
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.background = isActiveRow ? mixRgba(hex, 0.16) : mixRgba(hex, 0.08)
-                                                }}
-                                            >
-                                                <div style={{ ...ui.tableCell, display: 'flex', gap: 10, alignItems: 'center' }}>
-                                                    <div style={{ minWidth: 0 }}>
-                                                        <div style={ui.playerName}>{p.playerName}</div>
-
-                                                        <div style={ui.raceLine}>
-                                                            {icon ? <img src={icon} alt={raceLabel(p.race)} style={ui.miniIcon(hex)} /> : null}
-                                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                                {raceLabel(p.race)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div style={ui.score}>{p.score}</div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                            <button
-                                disabled={loading}
-                                onClick={() => setCardsOpen(true)}
-                                style={{
-                                    ...ui.btn('cards', loading),
-
-                                    width: '100%',
-                                    height: 56,
-
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-
-                                    fontSize: 20,
-                                    fontWeight: 1000,
-                                    letterSpacing: 1.2,
-
-                                    textTransform: 'uppercase',
-
-                                    transition:
-                                        'transform 140ms ease, box-shadow 140ms ease, filter 140ms ease',
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (loading) return
-                                    e.currentTarget.style.transform = 'translateY(-2px)'
-                                    e.currentTarget.style.boxShadow =
-                                        '0 26px 70px rgba(0,0,0,0.65), 0 0 90px rgba(59,130,246,0.28)'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)'
-                                    e.currentTarget.style.boxShadow =
-                                        '0 20px 50px rgba(0,0,0,0.55), 0 0 60px rgba(59,130,246,0.18)'
-                                }}
-                            >
-                                CARD LIST
-                            </button>
-                        </div>
-                    </div>
+                    <MatchPlayersSection
+                        playersInMatchOrder={playersInMatchOrder}
+                        localTime={localTime}
+                        runningPlayerId={runningPlayerId}
+                        loading={loading}
+                        matchStarted={!!matchStarted}
+                        scoreInput={scoreInput}
+                        setScoreInput={setScoreInput}
+                        raceKey={raceKey}
+                        raceLabel={raceLabel}
+                        mixRgba={mixRgba}
+                        RACE_COLOR={RACE_COLOR}
+                        RACE_ICON={RACE_ICON}
+                        ui={ui}
+                        onRemoveSecond={removeSecond}
+                        onAddSecond={addSecond}
+                        onRemoveMinute={removeMinute}
+                        onAddMinute={addMinute}
+                        onSetScoreAbsolute={setScoreAbsolute}
+                        onRefreshTimer={refreshTimer}
+                        onSetRunning={setRunning}
+                        onStopRunning={stopRunning}
+                        onOpenCards={() => setCardsOpen(true)}
+                    />
                 )}
 
                 {/* CARDS MODAL */}
