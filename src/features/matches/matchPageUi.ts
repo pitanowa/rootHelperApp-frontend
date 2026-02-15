@@ -8,18 +8,6 @@ export function mixRgba(baseHex: string, alpha: number) {
     return hexToRgba(baseHex, clamp(alpha, 0, 1))
 }
 
-function readableTextOn(hex: string) {
-    // prosta heurystyka: jasne kolory -> ciemny tekst, ciemne -> jasny
-    const h = hex.replace('#', '')
-    const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
-    const num = parseInt(full, 16)
-    const r = (num >> 16) & 255
-    const g = (num >> 8) & 255
-    const b = num & 255
-    // luminancja
-    const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
-    return lum > 0.62 ? '#0b0b0f' : 'rgba(255,255,255,0.92)'
-}
 type BtnVariant = 'primary' | 'ghost' | 'danger' | 'race' | 'cards'
 
 const ui = {
@@ -227,9 +215,7 @@ const ui = {
             color:
                 variant === 'cards'
                     ? 'rgba(255,255,255,0.94)'
-                    : variant === 'race'
-                        ? readableTextOn(hex ?? '#ffffff')
-                        : 'rgba(255,255,255,0.92)',
+                    : 'rgba(255,255,255,0.92)',
 
             cursor: disabled ? 'not-allowed' : 'pointer',
             opacity: disabled ? 0.55 : 1,

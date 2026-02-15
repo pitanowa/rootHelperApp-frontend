@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import type { LeaguePageUi } from '../leaguePageUi'
 
 type Props = {
@@ -24,9 +23,6 @@ export default function LeaguePageHeader({ loading, error, onRefresh, ui }: Prop
       ) : null}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-        <Link to="/groups" style={ui.backLink}>
-          ‹ back
-        </Link>
         <button
           onClick={onRefresh}
           disabled={loading}

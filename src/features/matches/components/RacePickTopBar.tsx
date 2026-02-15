@@ -1,4 +1,4 @@
-﻿import type { MatchPlayerState } from '../types'
+import type { MatchPlayerState } from '../types'
 import type { RacePickUi } from '../racePickTypes'
 
 type Props = {

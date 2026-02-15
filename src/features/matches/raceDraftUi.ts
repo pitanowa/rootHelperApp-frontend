@@ -1,4 +1,4 @@
-﻿import type { CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
 
 export const raceDraftUi = {
   page: {
@@ -6,16 +6,16 @@ export const raceDraftUi = {
     margin: '0 auto',
     padding: 16,
     fontFamily: 'system-ui, sans-serif',
-    color: 'rgba(255,255,255,0.92)',
+    color: '#fbeff1',
   } as const,
 
   backdrop: {
     borderRadius: 20,
     padding: 16,
     background:
-      'radial-gradient(900px 400px at 20% 0%, rgba(220,38,38,0.22), transparent 55%), radial-gradient(800px 360px at 85% 10%, rgba(59,130,246,0.18), transparent 60%), linear-gradient(180deg, rgba(10,10,12,0.92), rgba(16,10,12,0.88))',
-    border: '1px solid rgba(255,255,255,0.08)',
-    boxShadow: '0 28px 80px rgba(0,0,0,0.45), 0 0 60px rgba(220,38,38,0.10)',
+      'radial-gradient(960px 340px at 12% 0%, rgba(148,19,41,0.24), transparent 58%), radial-gradient(760px 240px at 92% 10%, rgba(83,12,24,0.28), transparent 62%), linear-gradient(180deg, rgba(16,6,10,0.96), rgba(8,3,6,0.98))',
+    border: '1px solid rgba(173,55,69,0.28)',
+    boxShadow: '0 28px 80px rgba(0,0,0,0.58), 0 0 44px rgba(121,15,33,0.2)',
     backdropFilter: 'blur(10px)',
   } as const,
 
@@ -42,9 +42,9 @@ export const raceDraftUi = {
     gap: 8,
     padding: '8px 10px',
     borderRadius: 14,
-    border: '1px solid rgba(255,255,255,0.12)',
-    background: 'rgba(255,255,255,0.06)',
-    color: 'rgba(255,255,255,0.78)',
+    border: '1px solid rgba(209,110,122,0.3)',
+    background: 'rgba(255,255,255,0.04)',
+    color: 'rgba(233,200,205,0.78)',
     fontSize: 12,
   } as const,
 
@@ -60,9 +60,9 @@ export const raceDraftUi = {
     marginTop: 12,
     borderRadius: 18,
     padding: 14,
-    border: '1px solid rgba(255,255,255,0.10)',
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03))',
-    boxShadow: '0 18px 55px rgba(0,0,0,0.35)',
+    border: '1px solid rgba(173,55,69,0.28)',
+    background: 'linear-gradient(180deg, rgba(20,7,12,0.96), rgba(10,4,7,0.98))',
+    boxShadow: '0 18px 55px rgba(0,0,0,0.46), 0 0 34px rgba(121,15,33,0.14)',
   } as const,
 
   cardHeader: {
@@ -78,13 +78,13 @@ export const raceDraftUi = {
     margin: 0,
     fontSize: 18,
     letterSpacing: 0.4,
-    color: 'rgba(255,255,255,0.92)',
+    color: '#fbeff1',
   } as const,
 
   sub: {
     fontSize: 12,
     opacity: 0.78,
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(233,200,205,0.78)',
     marginTop: 4,
   } as const,
 
@@ -95,7 +95,7 @@ export const raceDraftUi = {
       gap: 8,
       padding: '7px 10px',
       borderRadius: 999,
-      border: '1px solid rgba(255,255,255,0.12)',
+      border: '1px solid rgba(209,110,122,0.3)',
       fontWeight: 1000,
       fontSize: 12,
       letterSpacing: 0.4,
@@ -104,21 +104,21 @@ export const raceDraftUi = {
 
     const map: Record<'hot' | 'ghost' | 'ok' | 'info', CSSProperties> = {
       hot: {
-        background: 'linear-gradient(135deg, rgba(220,38,38,0.90), rgba(127,29,29,0.88))',
-        color: 'rgba(255,255,255,0.95)',
-        boxShadow: '0 16px 34px rgba(220,38,38,0.22)',
+        background: 'linear-gradient(135deg, rgba(193,38,61,0.9), rgba(117,15,31,0.92))',
+        color: '#fbeff1',
+        boxShadow: '0 16px 34px rgba(121,15,33,0.32)',
       },
       ok: {
-        background: 'linear-gradient(135deg, rgba(34,197,94,0.22), rgba(255,255,255,0.04))',
-        color: 'rgba(255,255,255,0.88)',
+        background: 'linear-gradient(135deg, rgba(184,140,66,0.3), rgba(255,255,255,0.04))',
+        color: 'rgba(251,239,241,0.88)',
       },
       info: {
-        background: 'linear-gradient(135deg, rgba(59,130,246,0.24), rgba(255,255,255,0.04))',
-        color: 'rgba(255,255,255,0.88)',
+        background: 'linear-gradient(135deg, rgba(159,27,49,0.6), rgba(81,10,20,0.5))',
+        color: 'rgba(251,239,241,0.88)',
       },
       ghost: {
-        background: 'rgba(255,255,255,0.05)',
-        color: 'rgba(255,255,255,0.78)',
+        background: 'rgba(255,255,255,0.04)',
+        color: 'rgba(233,200,205,0.78)',
         opacity: 0.9,
       },
     }
@@ -132,29 +132,29 @@ export const raceDraftUi = {
       borderRadius: 12,
       border:
         variant === 'danger'
-          ? '1px solid rgba(248,113,113,0.35)'
+          ? '1px solid rgba(255,95,116,0.45)'
           : variant === 'open'
-            ? '1px solid rgba(59,130,246,0.35)'
+            ? '1px solid rgba(255,95,116,0.42)'
             : variant === 'gold'
               ? '1px solid rgba(250,204,21,0.30)'
-              : '1px solid rgba(255,255,255,0.14)',
+              : '1px solid rgba(209,110,122,0.28)',
       background:
         variant === 'danger'
-          ? 'linear-gradient(135deg, rgba(220,38,38,0.88), rgba(127,29,29,0.88))'
+          ? 'linear-gradient(135deg, rgba(193,38,61,0.86), rgba(117,15,31,0.9))'
           : variant === 'open'
-            ? 'linear-gradient(135deg, rgba(59,130,246,0.92), rgba(99,102,241,0.92))'
+            ? 'linear-gradient(135deg, rgba(159,27,49,0.64), rgba(81,10,20,0.5))'
             : variant === 'gold'
               ? 'linear-gradient(135deg, rgba(250,204,21,0.22), rgba(255,255,255,0.04))'
-              : 'rgba(255,255,255,0.05)',
-      color: 'rgba(255,255,255,0.92)',
+              : 'rgba(255,255,255,0.04)',
+      color: '#fbeff1',
       fontWeight: 1000,
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.55 : 1,
       boxShadow:
         variant === 'danger'
-          ? '0 16px 34px rgba(220,38,38,0.22)'
+          ? '0 16px 34px rgba(121,15,33,0.32)'
           : variant === 'open'
-            ? '0 16px 34px rgba(59,130,246,0.22)'
+            ? '0 16px 34px rgba(121,15,33,0.24)'
             : variant === 'gold'
               ? '0 16px 34px rgba(250,204,21,0.10)'
               : 'none',
@@ -179,16 +179,16 @@ export const raceDraftUi = {
       borderRadius: 16,
       border:
         state === 'banned'
-          ? '1px solid rgba(248,113,113,0.35)'
+          ? '1px solid rgba(255,95,116,0.45)'
           : state === 'pick'
-            ? '1px solid rgba(59,130,246,0.35)'
-            : '1px solid rgba(255,255,255,0.14)',
+            ? '1px solid rgba(255,95,116,0.42)'
+            : '1px solid rgba(209,110,122,0.28)',
       background:
         state === 'banned'
-          ? 'linear-gradient(180deg, rgba(220,38,38,0.18), rgba(255,255,255,0.04))'
+          ? 'linear-gradient(180deg, rgba(193,38,61,0.28), rgba(255,255,255,0.04))'
           : state === 'pick'
-            ? 'linear-gradient(180deg, rgba(59,130,246,0.18), rgba(255,255,255,0.04))'
-            : 'rgba(255,255,255,0.05)',
+            ? 'linear-gradient(180deg, rgba(159,27,49,0.24), rgba(255,255,255,0.04))'
+            : 'rgba(255,255,255,0.04)',
       cursor: disabled ? 'not-allowed' : 'pointer',
       opacity: disabled ? 0.55 : 1,
       display: 'flex',
@@ -197,33 +197,33 @@ export const raceDraftUi = {
       gap: 10,
       boxShadow:
         state === 'banned'
-          ? '0 18px 45px rgba(0,0,0,0.34), 0 0 40px rgba(220,38,38,0.10)'
+          ? '0 18px 45px rgba(0,0,0,0.34), 0 0 40px rgba(121,15,33,0.16)'
           : '0 16px 40px rgba(0,0,0,0.28)',
       transition: 'transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease',
     }) as const,
 
-  icon32: { width: 34, height: 34 } as const,
+  icon32: { width: 44, height: 44 } as const,
 
   hint: {
     marginTop: 10,
     fontSize: 12,
     opacity: 0.78,
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(233,200,205,0.78)',
   } as const,
 
   playerRow: (isCurrent: boolean) =>
     ({
       borderRadius: 16,
       padding: 12,
-      border: isCurrent ? '1px solid rgba(220,38,38,0.25)' : '1px solid rgba(255,255,255,0.10)',
+      border: isCurrent ? '1px solid rgba(255,95,116,0.42)' : '1px solid rgba(173,55,69,0.28)',
       background: isCurrent
-        ? 'linear-gradient(180deg, rgba(220,38,38,0.14), rgba(255,255,255,0.03))'
-        : 'rgba(255,255,255,0.04)',
+        ? 'linear-gradient(180deg, rgba(159,27,49,0.34), rgba(255,255,255,0.04))'
+        : 'rgba(255,255,255,0.03)',
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: 12,
-      boxShadow: isCurrent ? '0 20px 55px rgba(0,0,0,0.36)' : '0 16px 40px rgba(0,0,0,0.28)',
+      boxShadow: isCurrent ? '0 20px 55px rgba(0,0,0,0.42), 0 0 32px rgba(121,15,33,0.14)' : '0 16px 40px rgba(0,0,0,0.28)',
       transition: 'transform 120ms ease, box-shadow 120ms ease',
     }) as const,
 
@@ -237,7 +237,7 @@ export const raceDraftUi = {
   playerName: {
     fontWeight: 1000,
     letterSpacing: 0.2,
-    color: 'rgba(255,255,255,0.92)',
+    color: '#fbeff1',
   } as const,
 
   playerRight: {
@@ -253,17 +253,17 @@ export const raceDraftUi = {
     alignItems: 'center',
     padding: '6px 10px',
     borderRadius: 999,
-    border: '1px solid rgba(255,255,255,0.14)',
-    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(209,110,122,0.3)',
+    background: 'rgba(255,255,255,0.04)',
   } as const,
 
   err: {
     padding: 12,
     borderRadius: 14,
-    border: '1px solid rgba(248,113,113,0.40)',
-    background: 'rgba(220,38,38,0.12)',
+    border: '1px solid rgba(255,95,116,0.45)',
+    background: 'rgba(181,53,31,0.28)',
     marginTop: 12,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#fbeff1',
   } as const,
 
   overlay: {
@@ -280,9 +280,9 @@ export const raceDraftUi = {
   modal: {
     width: 'min(640px, 100%)',
     borderRadius: 18,
-    border: '1px solid rgba(255,255,255,0.14)',
-    background: 'linear-gradient(180deg, rgba(14,14,18,1), rgba(10,10,12,1))',
-    boxShadow: '0 30px 90px rgba(0,0,0,0.60), 0 0 70px rgba(220,38,38,0.10)',
+    border: '1px solid rgba(173,55,69,0.3)',
+    background: 'linear-gradient(180deg, rgba(16,6,10,0.98), rgba(8,3,6,1))',
+    boxShadow: '0 30px 90px rgba(0,0,0,0.6), 0 0 70px rgba(121,15,33,0.18)',
     padding: 16,
   } as const,
 
@@ -291,7 +291,7 @@ export const raceDraftUi = {
     fontWeight: 1000,
     letterSpacing: 0.2,
     marginBottom: 6,
-    color: 'rgba(255,255,255,0.92)',
+    color: '#fbeff1',
   } as const,
 
   modalBody: {
@@ -299,7 +299,7 @@ export const raceDraftUi = {
     opacity: 0.86,
     lineHeight: 1.6,
     marginBottom: 12,
-    color: 'rgba(255,255,255,0.80)',
+    color: 'rgba(233,200,205,0.86)',
   } as const,
 
   modalFooter: {
@@ -311,4 +311,3 @@ export const raceDraftUi = {
 }
 
 export type RaceDraftUi = typeof raceDraftUi
-

@@ -75,7 +75,7 @@ export default function RacePickRacePool({
                   border: '1px solid rgba(255,255,255,0.14)',
                 }}
               />
-              <div style={{ fontWeight: 1000 }}>{rk}</div>
+              <div style={{ fontWeight: 1000 }}>{raceLabel(rk)}</div>
             </button>
           )
         })}

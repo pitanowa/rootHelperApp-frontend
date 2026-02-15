@@ -109,7 +109,11 @@ export default function RaceDraftBanPhase({
               }}
             >
               <img src={RACE_ICON[race]} alt={race} style={ui.icon32} />
-              {isVaga && <span style={{ fontSize: 12, fontWeight: 1000 }}>{vagabondBanCount}/{maxVagabondCopies}</span>}
+              {isVaga && (
+                <span style={{ fontSize: 11, fontWeight: 1000, color: '#fbeff1' }}>
+                  {vagabondBanCount}/{maxVagabondCopies}
+                </span>
+              )}
             </button>
           )
         })}
@@ -118,7 +122,10 @@ export default function RaceDraftBanPhase({
           <button
             onClick={addSecondVagabondBan}
             disabled={loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2}
-            style={ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2)}
+            style={{
+              ...ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2),
+              color: '#fbeff1',
+            }}
             title="Add second VAGABOND ban (ban 2 of 2 copies)"
           >
             🗡️ +1 VAGABOND ban
@@ -126,8 +133,18 @@ export default function RaceDraftBanPhase({
         )}
       </div>
 
+      {localBans.length > 0 && (
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {localBans.map((race, idx) => (
+            <span key={`${race}-${idx}`} style={ui.badge('hot')}>
+              🚫 {raceLabel(race)}
+            </span>
+          ))}
+        </div>
+      )}
+
       {landmarksEnabled && (
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(173,55,69,0.28)' }}>
           <div style={ui.cardHeader}>
             <div>
               <h2 style={ui.h2}>Landmarks</h2>
@@ -143,18 +160,24 @@ export default function RaceDraftBanPhase({
             </div>
           </div>
 
-          {LANDMARKS.map((lm) => {
-            const picked = localLandmarkBanned === lm.id
-            const disabled = loading || draft.status !== 'DRAFTING'
+          <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+            {LANDMARKS.map((lm) => {
+              const picked = localLandmarkBanned === lm.id
+              const disabled = loading || draft.status !== 'DRAFTING'
 
-            return (
-              <Tooltip key={lm.id} placement="top" content={lmTooltipContent(lm.id as LandmarkId)} disabled={disabled}>
-                <button disabled={disabled} onClick={() => setLocalLandmarkBanned(lm.id)} style={ui.raceTile(picked ? 'banned' : 'neutral', disabled)}>
-                  {picked ? '🚫' : '🏷️'} {lmLabel(lm.id as LandmarkId)}
-                </button>
-              </Tooltip>
-            )
-          })}
+              return (
+                <Tooltip key={lm.id} placement="top" content={lmTooltipContent(lm.id as LandmarkId)} disabled={disabled}>
+                  <button
+                    disabled={disabled}
+                    onClick={() => setLocalLandmarkBanned(lm.id)}
+                    style={{ ...ui.raceTile(picked ? 'banned' : 'neutral', disabled), color: '#fbeff1' }}
+                  >
+                    {picked ? '🚫' : '🏷️'} {lmLabel(lm.id as LandmarkId)}
+                  </button>
+                </Tooltip>
+              )
+            })}
+          </div>
 
           <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={ui.sub}>Random draw:</span>
