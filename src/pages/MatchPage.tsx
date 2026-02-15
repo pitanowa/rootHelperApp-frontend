@@ -1,5 +1,6 @@
 ﻿import { useParams } from 'react-router-dom'
 import CardsModal from '../components/modals/CardsModal'
+import SetupModal from '../components/modals/SetupModal'
 import { MatchSummaryModal } from '../components/modals/MatchSummary'
 import { MatchSummaryView } from '../components/match/MatchSummaryView'
 import RaceDraftView from './RaceDraftPage'
@@ -7,11 +8,10 @@ import RacePickView from './RacePickPage'
 import { CARDS } from '../data/cards'
 import MatchPlayersSection from '../features/matches/components/MatchPlayersSection'
 import MatchActionsBar from '../features/matches/components/MatchActionsBar'
-import MatchTopBar from '../features/matches/components/MatchTopBar'
 import { useCardsFilters } from '../features/matches/hooks/useCardsFilters'
 import { useMatchController } from '../features/matches/hooks/useMatchController'
 import { useMatchPageFlow } from '../features/matches/hooks/useMatchPageFlow'
-import { lsGetRaceMap } from '../features/matches/matchPageStorage'
+import { LS_SETUP, lsGetRaceMap, lsSetBool, setupTextForRace } from '../features/matches/matchPageStorage'
 import { matchPageUi, mixRgba, playAlarm } from '../features/matches/matchPageUi'
 
 export default function MatchPage() {
@@ -35,7 +35,6 @@ export default function MatchPage() {
     summaryDesc,
     setSummaryDesc,
     summarySaving,
-    presetSeconds,
     matchStarted,
     load,
     startMatch,
@@ -140,26 +139,12 @@ export default function MatchPage() {
   return (
     <div style={matchPageUi.page}>
       <div style={matchPageUi.shell}>
-        <MatchTopBar
-          state={state}
-          loading={loading}
-          mid={mid}
-          flowStage={flowStage}
-          setFlowStage={setFlowStage}
-          playersInMatchOrder={playersInMatchOrder}
-          setupIndex={setupIndex}
-          setSetupIndex={setSetupIndex}
-          onRefresh={load}
-          ui={matchPageUi}
-        />
-
         {state && (
           <MatchActionsBar
             state={state}
             draft={draft}
             loading={loading}
             matchStarted={!!matchStarted}
-            presetSeconds={presetSeconds}
             runningPlayerId={runningPlayerId}
             onStartMatch={startMatch}
             onFinishMatch={finish}
@@ -168,6 +153,20 @@ export default function MatchPage() {
             ui={matchPageUi}
           />
         )}
+
+        <SetupModal
+          open={flowStage !== 'NONE'}
+          loading={loading}
+          playersInMatchOrder={playersInMatchOrder}
+          setupIndex={setupIndex}
+          setSetupIndex={setSetupIndex}
+          mid={mid}
+          setFlowStage={setFlowStage}
+          setupTextForRace={setupTextForRace}
+          lsSetBool={lsSetBool}
+          LS_SETUP={LS_SETUP}
+          ui={matchPageUi}
+        />
 
         {error && <div style={matchPageUi.errorBox}>Error: {error}</div>}
 
@@ -183,7 +182,6 @@ export default function MatchPage() {
             landmarksEnabled={state.landmarksEnabled}
             landmarkBanned={state.landmarkBanned}
             landmarksDrawn={state.landmarksDrawn ?? []}
-            landmarksRandomCount={state.landmarksRandomCount ?? null}
             scoreInput={scoreInput}
             setScoreInput={setScoreInput}
             mixRgba={mixRgba}
@@ -246,5 +244,3 @@ export default function MatchPage() {
     </div>
   )
 }
-
-

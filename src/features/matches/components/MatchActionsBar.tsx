@@ -1,4 +1,5 @@
-﻿import type { DraftState, MatchState } from '../types'
+﻿import { Link } from 'react-router-dom'
+import type { DraftState, MatchState } from '../types'
 import type { MatchPageUi } from '../matchPageUi'
 
 type Props = {
@@ -6,7 +7,6 @@ type Props = {
   draft: DraftState | null
   loading: boolean
   matchStarted: boolean
-  presetSeconds: number
   runningPlayerId: number | null
   onStartMatch: () => void | Promise<void>
   onFinishMatch: () => void | Promise<void>
@@ -20,7 +20,6 @@ export default function MatchActionsBar({
   draft,
   loading,
   matchStarted,
-  presetSeconds,
   runningPlayerId,
   onStartMatch,
   onFinishMatch,
@@ -31,6 +30,10 @@ export default function MatchActionsBar({
   return (
     <div style={ui.actionsTop}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Link to="/groups" style={{ ...ui.btn('ghost', loading), textDecoration: 'none' }}>
+          ← Back
+        </Link>
+
         {!matchStarted ? (
           <button
             onClick={onStartMatch}
@@ -63,10 +66,6 @@ export default function MatchActionsBar({
             Finish match
           </button>
         )}
-
-        <span style={ui.badge}>
-          preset: <b>{presetSeconds}s</b>
-        </span>
 
         {showSetupHintsButton && (
           <button

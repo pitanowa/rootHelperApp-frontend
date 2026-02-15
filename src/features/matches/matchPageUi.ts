@@ -81,18 +81,19 @@ const ui = {
 
     playerCard: (hex: string, timeUp: boolean, isRunning: boolean) =>
         ({
+            position: 'relative',
             borderRadius: 22,
             border: timeUp
                 ? '2px solid rgba(239,68,68,0.90)'
                 : isRunning
-                    ? `2px solid ${mixRgba(hex, 0.70)}`
+                    ? `2px solid ${mixRgba(hex, 0.88)}`
                     : `1px solid ${mixRgba(hex, 0.26)}`,
             background:
                 `radial-gradient(700px 260px at 10% 0%, ${mixRgba(hex, 0.18)}, transparent 60%), linear-gradient(180deg, rgba(16,16,20,1), rgba(10,10,12,1))`,
             boxShadow: timeUp
                 ? '0 18px 55px rgba(239,68,68,0.20)'
                 : isRunning
-                    ? `0 18px 55px rgba(0,0,0,0.55), 0 0 60px ${mixRgba(hex, 0.18)}`
+                    ? `0 24px 70px rgba(0,0,0,0.62), 0 0 90px ${mixRgba(hex, 0.34)}, inset 0 0 0 1px ${mixRgba(hex, 0.35)}`
                     : `0 16px 46px rgba(0,0,0,0.50), 0 0 48px ${mixRgba(hex, 0.10)}`,
             padding: 14,
             minHeight: 220,

@@ -4,6 +4,7 @@ import Tooltip from '../../../components/Tooltip'
 import { LANDMARKS, type LandmarkId, lmLabel, lmTooltipContent } from '../../../data/landmarks'
 import type { MatchPlayerState } from '../types'
 import { raceKey, raceLabel, RACE_COLOR, RACE_ICON } from '../../../constants/races'
+import MatchPlayerCard from './MatchPlayerCard'
 
 type MatchPlayersSectionUi = {
   layout: CSSProperties
@@ -42,7 +43,6 @@ type Props = {
   landmarksEnabled?: boolean
   landmarkBanned?: string | null
   landmarksDrawn?: string[]
-  landmarksRandomCount?: number | null
   scoreInput: Record<number, string>
   setScoreInput: Dispatch<SetStateAction<Record<number, string>>>
   mixRgba: (baseHex: string, alpha: number) => string
@@ -67,7 +67,6 @@ export default function MatchPlayersSection({
   landmarksEnabled,
   landmarkBanned,
   landmarksDrawn,
-  landmarksRandomCount,
   scoreInput,
   setScoreInput,
   mixRgba,
@@ -89,217 +88,34 @@ export default function MatchPlayersSection({
   const activePlayer = playersInMatchOrder.find((p) => p.playerId === runningPlayerId) ?? null
   const drawn = landmarksDrawn ?? []
   const drawnSet = new Set(drawn)
-  const drawCount = (drawn.length || landmarksRandomCount) ?? '—'
 
   return (
     <div style={ui.layout}>
       <div style={ui.centerWrap}>
         <div style={{ width: 'min(980px, 100%)' }}>
           <div style={ui.cardsGrid}>
-            {playersInMatchOrder.map((p) => {
-              const rk = raceKey(p.race)
-              const hex = RACE_COLOR[rk] ?? '#dc2626'
-              const icon = RACE_ICON[rk] ?? ''
-
-              const t = localTime[p.playerId] ?? p.timeLeftSeconds
-              const timeUp = t <= 0
-              const isRunning = runningPlayerId === p.playerId
-
-              return (
-                <div key={p.playerId} style={ui.playerCard(hex, timeUp, isRunning)}>
-                  <div style={ui.cardTopRow}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={ui.smallName} title={p.playerName}>
-                        {p.playerName}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 6 }}>
-                        <span style={ui.badgeStrong(hex)}>{raceLabel(p.race)}</span>
-
-                        {timeUp ? (
-                          <span style={ui.badgeStrong('#ef4444')}>TIME UP</span>
-                        ) : isRunning ? (
-                          <span style={ui.badgeStrong('#22c55e')}>RUNNING</span>
-                        ) : (
-                          <span style={ui.badge}>STOPPED</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {icon ? (
-                      <img
-                        src={icon}
-                        alt={raceLabel(p.race)}
-                        title={raceLabel(p.race)}
-                        style={{ ...ui.heroIcon(hex), width: 56, height: 56, padding: 8, borderRadius: 16 }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10 }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={ui.timerRow}>
-                        <div>
-                          <div style={ui.smallTimer(timeUp)}>{fmt(t)}</div>
-                          <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)', marginTop: 4 }}>time left</div>
-                        </div>
-
-                        <div style={ui.timeControls}>
-                          <button
-                            onClick={() => onRemoveSecond(p.playerId)}
-                            disabled={loading || !matchStarted}
-                            style={ui.timeBtn('sub', loading || !matchStarted)}
-                            onMouseEnter={(e) => {
-                              if (loading || !matchStarted) return
-                              e.currentTarget.style.transform = 'translateY(-1px)'
-                              e.currentTarget.style.filter = 'brightness(1.08)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'translateY(0)'
-                              e.currentTarget.style.filter = 'none'
-                            }}
-                            title="-1 second"
-                          >
-                            -1s
-                          </button>
-
-                          <button
-                            onClick={() => onAddSecond(p.playerId)}
-                            disabled={loading || !matchStarted}
-                            style={ui.timeBtn('add', loading || !matchStarted)}
-                            onMouseEnter={(e) => {
-                              if (loading || !matchStarted) return
-                              e.currentTarget.style.transform = 'translateY(-1px)'
-                              e.currentTarget.style.filter = 'brightness(1.08)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'translateY(0)'
-                              e.currentTarget.style.filter = 'none'
-                            }}
-                            title="+1 second"
-                          >
-                            +1s
-                          </button>
-
-                          <button
-                            onClick={() => onRemoveMinute(p.playerId)}
-                            disabled={loading || !matchStarted}
-                            style={ui.timeBtn('sub', loading || !matchStarted)}
-                            onMouseEnter={(e) => {
-                              if (loading || !matchStarted) return
-                              e.currentTarget.style.transform = 'translateY(-1px)'
-                              e.currentTarget.style.filter = 'brightness(1.08)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'translateY(0)'
-                              e.currentTarget.style.filter = 'none'
-                            }}
-                            title="-1 minute"
-                          >
-                            -1m
-                          </button>
-
-                          <button
-                            onClick={() => onAddMinute(p.playerId)}
-                            disabled={loading || !matchStarted}
-                            style={ui.timeBtn('add', loading || !matchStarted)}
-                            onMouseEnter={(e) => {
-                              if (loading || !matchStarted) return
-                              e.currentTarget.style.transform = 'translateY(-1px)'
-                              e.currentTarget.style.filter = 'brightness(1.08)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'translateY(0)'
-                              e.currentTarget.style.filter = 'none'
-                            }}
-                            title="+1 minute"
-                          >
-                            +1m
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 12, opacity: 0.72, color: 'rgba(255,255,255,0.72)' }}>score</div>
-                      <div style={{ fontSize: 26, fontWeight: 1000, fontVariantNumeric: 'tabular-nums' }}>{p.score}</div>
-                    </div>
-                  </div>
-
-                  <div style={ui.miniActionsRow}>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <input
-                        type="number"
-                        value={scoreInput[p.playerId] ?? String(p.score ?? 0)}
-                        disabled={loading || !matchStarted}
-                        onChange={(e) => setScoreInput((prev) => ({ ...prev, [p.playerId]: e.target.value }))}
-                        onKeyDown={async (e) => {
-                          if (e.key !== 'Enter') return
-                          const raw = (scoreInput[p.playerId] ?? '').trim()
-                          if (raw === '') return
-                          const n = Number(raw)
-                          if (!Number.isFinite(n)) return
-                          await onSetScoreAbsolute(p.playerId, Math.trunc(n))
-                        }}
-                        style={{
-                          width: 80,
-                          padding: '10px 12px',
-                          borderRadius: 14,
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.06)',
-                          color: 'rgba(255,255,255,0.92)',
-                          outline: 'none',
-                          fontWeight: 900,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                        title="Wpisz docelowy wynik i nacisnij Enter"
-                      />
-
-                      <button
-                        onClick={async () => {
-                          const raw = (scoreInput[p.playerId] ?? '').trim()
-                          if (raw === '') return
-                          const n = Number(raw)
-                          if (!Number.isFinite(n)) return
-                          await onSetScoreAbsolute(p.playerId, Math.trunc(n))
-                        }}
-                        disabled={loading || !matchStarted}
-                        style={ui.btn('ghost', loading || !matchStarted)}
-                      >
-                        Set
-                      </button>
-
-                      <button
-                        onClick={() => onRefreshTimer(p.playerId)}
-                        disabled={loading || !matchStarted}
-                        style={ui.btn('ghost', loading || !matchStarted)}
-                      >
-                        Timer
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      {!isRunning ? (
-                        <button
-                          onClick={() => onSetRunning(p.playerId)}
-                          disabled={loading || !matchStarted}
-                          style={{
-                            ...ui.btn('race', loading || !matchStarted, hex),
-                            color: 'rgba(255,255,255,0.92)',
-                          }}
-                        >
-                          Start
-                        </button>
-                      ) : (
-                        <button onClick={() => onStopRunning(p.playerId)} disabled={loading || !matchStarted} style={ui.btn('danger', loading || !matchStarted)}>
-                          Stop
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {playersInMatchOrder.map((player) => (
+              <MatchPlayerCard
+                key={player.playerId}
+                player={player}
+                localTime={localTime[player.playerId] ?? player.timeLeftSeconds}
+                isRunning={runningPlayerId === player.playerId}
+                hasActiveTimer={runningPlayerId != null}
+                loading={loading}
+                matchStarted={matchStarted}
+                scoreInput={scoreInput}
+                setScoreInput={setScoreInput}
+                ui={ui}
+                onRemoveSecond={onRemoveSecond}
+                onAddSecond={onAddSecond}
+                onRemoveMinute={onRemoveMinute}
+                onAddMinute={onAddMinute}
+                onSetScoreAbsolute={onSetScoreAbsolute}
+                onRefreshTimer={onRefreshTimer}
+                onSetRunning={onSetRunning}
+                onStopRunning={onStopRunning}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -404,7 +220,7 @@ export default function MatchPlayersSection({
         </div>
 
         {landmarksEnabled && (
-          <div style={ui.panel}>
+          <div style={{ ...ui.panel, maxHeight: 'none', overflow: 'hidden' }}>
             <button
               type="button"
               onClick={() => setLandmarksOpen((prev) => !prev)}
@@ -423,11 +239,7 @@ export default function MatchPlayersSection({
             </button>
 
             {landmarksOpen && (
-              <div style={{ padding: 12, display: 'grid', gap: 10 }}>
-                <span style={ui.badge}>
-                  banned: <b>{landmarkBanned ?? '—'}</b> • draw: <b>{drawCount}</b>
-                </span>
-
+              <div style={{ padding: 12, display: 'grid', gap: 10, maxHeight: 420, overflowY: 'auto' }}>
                 <div>
                   <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6, fontWeight: 900 }}>AVAILABLE IN MATCH</div>
                   {drawn.length === 0 ? (
@@ -437,7 +249,7 @@ export default function MatchPlayersSection({
                       {drawn.map((id) => (
                         <Tooltip key={id} placement="top" content={lmTooltipContent(id as LandmarkId)}>
                           <span style={{ ...ui.badge, cursor: 'help', border: '1px solid rgba(255,95,116,0.42)' }}>
-                            Landmark: {lmLabel(id as LandmarkId)}
+                            {lmLabel(id as LandmarkId)}
                           </span>
                         </Tooltip>
                       ))}
@@ -447,7 +259,7 @@ export default function MatchPlayersSection({
 
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
                   <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8, fontWeight: 900 }}>ALL LANDMARKS</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 8 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
                     {LANDMARKS.map((lm) => {
                       const isBanned = landmarkBanned === lm.id
                       const isDrawn = drawnSet.has(lm.id)
@@ -467,13 +279,23 @@ export default function MatchPlayersSection({
                                   ? 'rgba(159,27,49,0.16)'
                                   : 'rgba(255,255,255,0.03)',
                               padding: '8px 10px',
-                              display: 'grid',
-                              gap: 4,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
                             }}
                           >
-                            <div style={{ fontWeight: 900, fontSize: 13 }}>{lmLabel(lm.id as LandmarkId)}</div>
-                            <div style={{ fontSize: 11, opacity: 0.8 }}>
-                              {isBanned ? 'Banned' : isDrawn ? 'Available' : 'Not drawn'}
+                            <div
+                              style={{
+                                fontWeight: 900,
+                                fontSize: 13,
+                                lineHeight: 1.2,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {lmLabel(lm.id as LandmarkId)}
                             </div>
                           </div>
                         </Tooltip>
@@ -489,11 +311,3 @@ export default function MatchPlayersSection({
     </div>
   )
 }
-
-function fmt(secs: number) {
-  const s = Math.max(0, Math.floor(secs))
-  const m = Math.floor(s / 60)
-  const r = s % 60
-  return `${m}:${String(r).padStart(2, '0')}`
-}
-
