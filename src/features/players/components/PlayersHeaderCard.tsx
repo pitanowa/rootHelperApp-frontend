@@ -32,13 +32,13 @@ export default function PlayersHeaderCard({
           disabled={loading}
           style={ui.input}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(59,130,246,0.35)'
-            e.currentTarget.style.boxShadow = '0 18px 55px rgba(0,0,0,0.34), 0 0 30px rgba(59,130,246,0.12)'
+            e.currentTarget.style.borderColor = 'rgba(255,95,116,0.45)'
+            e.currentTarget.style.boxShadow = '0 18px 55px rgba(0,0,0,0.42), 0 0 30px rgba(137,19,40,0.22)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'
-            e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.22)'
+            e.currentTarget.style.borderColor = 'rgba(213,128,139,0.3)'
+            e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.3)'
             e.currentTarget.style.transform = 'translateY(0)'
           }}
           onKeyDown={(e) => {

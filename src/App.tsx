@@ -1,5 +1,6 @@
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, NavLink, Route, Routes } from 'react-router-dom'
 
 import PlayersPage from './pages/PlayersPage'
 import GroupsPage from './pages/GroupsPage'
@@ -8,371 +9,285 @@ import LeaguePage from './pages/LeaguePage'
 import MatchPage from './pages/MatchPage'
 import HomePage from './pages/HomePage'
 
-import { useAppCtx } from './useAppCtx'
+import { createGroupLeague, listGroupLeagues, listGroups } from './features/groups/api'
 import type { Group, League } from './types'
-import { listGroups, listGroupLeagues } from './features/groups/api'
-import { listLeagues } from './features/leagues/api'
-import { listActiveMatches } from './features/matches/api'
-import type { ActiveMatch } from './features/matches/types'
+import { useAppCtx } from './useAppCtx'
 
-function Nav() {
-  const nav = useNavigate()
+function TopNav() {
   const { selectedGroupId, setSelectedGroupId, selectedLeagueId, setSelectedLeagueId } = useAppCtx()
 
-  const [leagues, setLeagues] = useState<League[]>([])
-  const [activeMatches, setActiveMatches] = useState<ActiveMatch[]>([])
-  const [loadingLeagues, setLoadingLeagues] = useState(false)
-  const [loadingMatches, setLoadingMatches] = useState(false)
   const [groups, setGroups] = useState<Group[]>([])
+  const [leagues, setLeagues] = useState<League[]>([])
   const [loadingGroups, setLoadingGroups] = useState(false)
-  const [leagueMap, setLeagueMap] = useState<Record<number, string>>({})
+  const [loadingLeagues, setLoadingLeagues] = useState(false)
 
+  const [showLeagueCreate, setShowLeagueCreate] = useState(false)
+  const [newLeagueName, setNewLeagueName] = useState('')
+  const [creatingLeague, setCreatingLeague] = useState(false)
+  const [leagueError, setLeagueError] = useState<string | null>(null)
+
+  const loadLeagues = useCallback(
+    async (groupId: number) => {
+      setLoadingLeagues(true)
+      setLeagueError(null)
+      try {
+        const data = await listGroupLeagues(groupId)
+        const nextLeagues = data ?? []
+        setLeagues(nextLeagues)
+
+        const hasSelected = nextLeagues.some((league) => league.id === selectedLeagueId)
+        if (!hasSelected) {
+          setSelectedLeagueId(nextLeagues[0]?.id ?? null)
+        }
+      } catch {
+        setLeagues([])
+        setSelectedLeagueId(null)
+        setLeagueError('Nie udalo sie pobrac lig dla tej grupy.')
+      } finally {
+        setLoadingLeagues(false)
+      }
+    },
+    [selectedLeagueId, setSelectedLeagueId],
+  )
 
   useEffect(() => {
     let cancelled = false
-      ; (async () => {
-        try {
-          setLoadingGroups(true)
-          const data = await listGroups()
-          if (cancelled) return
-          setGroups(data ?? [])
-        } finally {
-          if (!cancelled) setLoadingGroups(false)
-        }
-      })()
+    ;(async () => {
+      setLoadingGroups(true)
+      try {
+        const data = await listGroups()
+        if (cancelled) return
+        setGroups(data ?? [])
+      } finally {
+        if (!cancelled) setLoadingGroups(false)
+      }
+    })()
+
     return () => {
       cancelled = true
     }
   }, [])
-
-  useEffect(() => {
-    let cancelled = false
-      ; (async () => {
-        try {
-          const all = await listLeagues()
-          if (cancelled) return
-          setLeagueMap(Object.fromEntries((all ?? []).map((l) => [l.id, l.name])))
-        } catch {
-          // olać — wtedy pokażemy tylko leagueId
-        }
-      })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const ui = {
-    barWrap: {
-      padding: 16,
-      maxWidth: 1000,
-      margin: '0 auto',
-    } as const,
-
-    bar: {
-      position: 'relative',
-      zIndex: 50,
-      display: 'flex',
-      gap: 10,
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      padding: 10,
-      borderRadius: 18,
-      border: '1px solid rgba(255,255,255,0.08)',
-      background:
-        'radial-gradient(900px 420px at 15% 0%, rgba(220,38,38,0.20), transparent 55%), radial-gradient(800px 360px at 90% 10%, rgba(59,130,246,0.16), transparent 60%), linear-gradient(180deg, rgba(10,10,12,0.92), rgba(16,10,12,0.88))',
-      boxShadow: '0 22px 60px rgba(0,0,0,0.40), 0 0 40px rgba(220,38,38,0.08)',
-    } as const,
-
-    link: (active: boolean) =>
-      ({
-        padding: '12px 14px',
-        borderRadius: 16,
-        fontSize: 14,
-        lineHeight: '16px',
-        fontWeight: 1000,
-        textDecoration: 'none',
-        border: active ? '1px solid rgba(248,113,113,0.30)' : '1px solid rgba(255,255,255,0.14)',
-        background: active
-          ? 'linear-gradient(135deg, rgba(220,38,38,0.30), rgba(255,255,255,0.05))'
-          : 'rgba(255,255,255,0.05)',
-        color: 'rgba(255,255,255,0.90)',
-        letterSpacing: 0.2,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 8,
-        boxShadow: active ? '0 18px 40px rgba(220,38,38,0.12)' : 'none',
-        transition: 'transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease',
-        userSelect: 'none',
-      }) as const,
-
-    pill: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 8,
-      padding: '1px 5px',
-      borderRadius: 14,
-      border: '1px solid rgba(255,255,255,0.14)',
-      background: 'rgba(255,255,255,0.05)',
-      color: 'rgba(255,255,255,0.90)',
-      fontWeight: 900,
-      height: '100%',
-    } as const,
-
-    select: {
-      position: 'relative',
-      zIndex: 60,
-      height: 32,
-      borderRadius: 10,
-      border: '1px solid rgba(255,255,255,0.14)',
-      background: 'rgba(0,0,0,0.25)',
-      color: 'rgba(255,255,255,0.92)',
-      padding: '0 10px',
-      fontWeight: 900,
-      outline: 'none',
-      cursor: 'pointer',
-    } as const,
-
-    rightGrid: {
-      marginLeft: 'auto',
-      display: 'grid',
-      gridTemplateColumns: 'auto auto',
-      gridTemplateRows: '44px 44px',
-      gap: 10,
-      alignItems: 'stretch',
-    } as const,
-
-
-    pillStack: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 10,
-    } as const,
-
-    button: (enabled: boolean) =>
-      ({
-        height: 32,
-        borderRadius: 10,
-        border: enabled ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(255,255,255,0.10)',
-        background: enabled ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.06)',
-        color: enabled ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.45)',
-        padding: '0 10px',
-        fontWeight: 1000,
-        cursor: enabled ? 'pointer' : 'not-allowed',
-      }) as const,
-
-    rightHint: {
-      fontSize: 12,
-      color: 'rgba(255,255,255,0.70)',
-      padding: '8px 10px',
-      borderRadius: 999,
-      border: '1px solid rgba(255,255,255,0.12)',
-      background: 'rgba(255,255,255,0.04)',
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 8,
-    } as const,
-  }
-
-  const linkStyle = ({ isActive }: { isActive: boolean }) => ui.link(isActive)
 
   useEffect(() => {
     if (!selectedGroupId) {
       setLeagues([])
       setSelectedLeagueId(null)
+      setShowLeagueCreate(false)
+      setLeagueError(null)
       return
     }
 
-    let cancelled = false
-      ; (async () => {
-        try {
-          setLoadingLeagues(true)
-          const data = await listGroupLeagues(selectedGroupId)
-          if (cancelled) return
+    void loadLeagues(selectedGroupId)
+  }, [loadLeagues, selectedGroupId, setSelectedLeagueId])
 
-          setLeagues(data ?? [])
+  const barWrap: CSSProperties = {
+    maxWidth: 1180,
+    margin: '0 auto',
+    padding: '14px 16px 0',
+  }
 
-          // auto-pick jeśli obecna liga nie istnieje w nowej liście
-          const stillValid = (data ?? []).some((l) => l.id === selectedLeagueId)
-          if (!stillValid) setSelectedLeagueId(data?.[0]?.id ?? null)
-        } finally {
-          if (!cancelled) setLoadingLeagues(false)
-        }
-      })()
+  const bar: CSSProperties = {
+    display: 'flex',
+    gap: 10,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    borderRadius: 16,
+    padding: 10,
+    border: '1px solid rgba(196,63,75,0.34)',
+    background:
+      'radial-gradient(900px 220px at 10% 0%, rgba(193,38,61,0.25), transparent 60%), linear-gradient(180deg, rgba(20,7,12,0.95), rgba(10,4,7,0.98))',
+    boxShadow: '0 16px 50px rgba(0,0,0,0.5), 0 0 32px rgba(137,19,40,0.18)',
+  }
 
-    return () => {
-      cancelled = true
+  const linkStyle = ({ isActive }: { isActive: boolean }): CSSProperties => ({
+    textDecoration: 'none',
+    color: '#fbeff1',
+    fontWeight: 900,
+    letterSpacing: 0.2,
+    borderRadius: 12,
+    padding: '10px 14px',
+    border: isActive ? '1px solid rgba(255,95,116,0.55)' : '1px solid rgba(213,128,139,0.3)',
+    background: isActive
+      ? 'linear-gradient(135deg, rgba(193,38,61,0.44), rgba(117,15,31,0.34))'
+      : 'rgba(255,255,255,0.04)',
+    boxShadow: isActive ? '0 10px 26px rgba(137,19,40,0.3)' : 'none',
+    transition: 'transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
+  })
+
+  const contextWrap: CSSProperties = {
+    marginLeft: 'auto',
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  }
+
+  const selectStyle: CSSProperties = {
+    height: 38,
+    borderRadius: 10,
+    border: '1px solid rgba(213,128,139,0.3)',
+    background: 'linear-gradient(180deg, rgba(26,9,14,0.95), rgba(14,5,9,0.98))',
+    color: '#fbeff1',
+    padding: '0 10px',
+    minWidth: 170,
+    fontWeight: 700,
+    outline: 'none',
+  }
+
+  const minorButton = (disabled: boolean): CSSProperties => ({
+    height: 38,
+    borderRadius: 10,
+    border: '1px solid rgba(213,128,139,0.3)',
+    background: disabled ? 'rgba(255,255,255,0.03)' : 'linear-gradient(135deg, rgba(193,38,61,0.42), rgba(117,15,31,0.34))',
+    color: disabled ? 'rgba(251,239,241,0.45)' : '#fbeff1',
+    padding: '0 12px',
+    fontWeight: 900,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+  })
+
+  const openLeagueLinkStyle: CSSProperties = {
+    ...minorButton(!selectedLeagueId),
+    display: 'inline-flex',
+    alignItems: 'center',
+    textDecoration: 'none',
+    pointerEvents: selectedLeagueId ? 'auto' : 'none',
+  }
+
+  const createLeague = async () => {
+    if (!selectedGroupId || !newLeagueName.trim() || creatingLeague) return
+
+    setCreatingLeague(true)
+    setLeagueError(null)
+    try {
+      const created = await createGroupLeague(selectedGroupId, newLeagueName.trim())
+      setNewLeagueName('')
+      setShowLeagueCreate(false)
+      await loadLeagues(selectedGroupId)
+      setSelectedLeagueId(created.id)
+    } catch {
+      setLeagueError('Nie udalo sie utworzyc ligi.')
+    } finally {
+      setCreatingLeague(false)
     }
-  }, [selectedGroupId, selectedLeagueId, setSelectedLeagueId])
-
-  useEffect(() => {
-    if (!selectedGroupId) {
-      setActiveMatches([])
-      return
-    }
-
-    let cancelled = false
-      ; (async () => {
-        try {
-          setLoadingMatches(true)
-
-          const data = await listActiveMatches(selectedGroupId, selectedLeagueId)
-          if (cancelled) return
-          setActiveMatches(data ?? [])
-        } finally {
-          if (!cancelled) setLoadingMatches(false)
-        }
-      })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [selectedGroupId, selectedLeagueId])
-
-  const newestActive = useMemo(() => activeMatches[0] ?? null, [activeMatches])
+  }
 
   return (
-    <div style={ui.barWrap}>
-      <div style={ui.bar}>
-        <NavLink
-          to="/"
-          style={linkStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-        >
-          🏠 Home
+    <div style={barWrap}>
+      <nav style={bar}>
+        <NavLink to="/" style={linkStyle}>
+          Home
+        </NavLink>
+        <NavLink to="/players" style={linkStyle}>
+          Players
+        </NavLink>
+        <NavLink to="/groups" style={linkStyle}>
+          Groups
         </NavLink>
 
-        <NavLink
-          to="/players"
-          style={linkStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-        >
-          🧑‍🤝‍🧑 Players
-        </NavLink>
+        <div style={contextWrap}>
+          <select
+            style={selectStyle}
+            value={selectedGroupId ?? ''}
+            onChange={(e) => {
+              const groupId = e.target.value ? Number(e.target.value) : null
+              setSelectedGroupId(groupId)
+              setSelectedLeagueId(null)
+              setShowLeagueCreate(false)
+              setLeagueError(null)
+            }}
+            disabled={loadingGroups || groups.length === 0}
+          >
+            <option value="">{loadingGroups ? 'Ladowanie grup...' : 'Wybierz grupe'}</option>
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
 
-        <NavLink
-          to="/groups"
-          style={linkStyle}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-        >
-          🛡️ Groups
-        </NavLink>
+          <select
+            style={selectStyle}
+            value={selectedLeagueId ?? ''}
+            onChange={(e) => setSelectedLeagueId(e.target.value ? Number(e.target.value) : null)}
+            disabled={!selectedGroupId || loadingLeagues || leagues.length === 0}
+          >
+            <option value="">
+              {!selectedGroupId ? 'Najpierw wybierz grupe' : loadingLeagues ? 'Ladowanie lig...' : 'Brak lig'}
+            </option>
+            {leagues.map((league) => (
+              <option key={league.id} value={league.id}>
+                {league.name}
+              </option>
+            ))}
+          </select>
 
-        {/* RIGHT SIDE (2x2 grid) */}
-        <div style={ui.rightGrid}>
-          {/* LEFT COLUMN: Group + League stacked */}
-          <div style={{ gridColumn: 1, gridRow: 1 }}>
-            <div style={ui.pill}>
-              <span style={{ opacity: 0.75, fontSize: 12 }}>Group:</span>
+          <Link to={selectedLeagueId ? `/leagues/${selectedLeagueId}` : '#'} style={openLeagueLinkStyle}>
+            Otwórz Ligę
+          </Link>
 
-              {loadingGroups ? (
-                <span style={{ opacity: 0.55, fontSize: 12 }}>loading…</span>
-              ) : groups.length === 0 ? (
-                <span style={{ opacity: 0.55, fontSize: 12 }}>none</span>
-              ) : (
-                <select
-                  style={ui.select}
-                  value={selectedGroupId ?? ''}
-                  onChange={(e) => {
-                    const gid = e.target.value ? Number(e.target.value) : null
-                    setSelectedGroupId(gid)
-                    setSelectedLeagueId(null)
-                    if (gid) nav(`/groups/${gid}`)
-                  }}
-                >
-                  <option value="" disabled>
-                    select…
-                  </option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-
-          <div style={{ gridColumn: 1, gridRow: 2 }}>
-            <div style={ui.pill}>
-              <span style={{ opacity: 0.75, fontSize: 12 }}>League:</span>
-
-              {!selectedGroupId ? (
-                <span style={{ opacity: 0.55, fontSize: 12 }}>select group</span>
-              ) : loadingLeagues ? (
-                <span style={{ opacity: 0.55, fontSize: 12 }}>loading…</span>
-              ) : leagues.length === 0 ? (
-                <span style={{ opacity: 0.55, fontSize: 12 }}>none</span>
-              ) : (
-                <select
-                  style={ui.select}
-                  value={selectedLeagueId ?? ''}
-                  onChange={(e) => setSelectedLeagueId(e.target.value ? Number(e.target.value) : null)}
-                >
-                  {leagues.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: Active match spans 2 rows */}
-          <div style={{ gridColumn: 2, gridRow: '1 / span 2' }}>
-            <div style={{ ...ui.pill, alignItems: 'center' }}>
-              <span style={{ opacity: 0.75, fontSize: 12 }}>Active match:</span>
-
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                {!selectedGroupId ? (
-                  <button style={ui.button(false)} disabled>
-                    select group
-                  </button>
-                ) : loadingMatches ? (
-                  <button style={ui.button(false)} disabled>
-                    loading…
-                  </button>
-                ) : activeMatches.length === 0 ? (
-                  <button style={ui.button(false)} disabled>
-                    none
-                  </button>
-                ) : activeMatches.length === 1 && newestActive ? (
-                  <button style={ui.button(true)} onClick={() => nav(`/matches/${newestActive.id}`)}>
-                    go #{newestActive.id}
-                  </button>
-                ) : (
-                  <select
-                    style={ui.select}
-                    value={newestActive?.id ?? ''}
-                    onChange={(e) => {
-                      const id = Number(e.target.value)
-                      if (id) nav(`/matches/${id}`)
-                    }}
-                  >
-                    {activeMatches.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        #{m.id}
-                        {m.leagueId ? ` • ${leagueMap[m.leagueId] ?? `L${m.leagueId}`}` : ''}
-                        {m.ranked != null ? (m.ranked ? ' • Ranked' : ' • Casual') : ''}
-                      </option>
-                    ))}
-
-                  </select>
-                )}
-              </div>
-
-              {/* dół — mały hint, opcjonalnie */}
-              <div style={{ opacity: 0.55, fontSize: 12 }}>
-                {activeMatches.length > 1 ? `${activeMatches.length} active` : ' '}
-              </div>
-            </div>
-          </div>
+          {!showLeagueCreate ? (
+            <button
+              type="button"
+              onClick={() => setShowLeagueCreate(true)}
+              disabled={!selectedGroupId}
+              style={minorButton(!selectedGroupId)}
+            >
+              + Liga
+            </button>
+          ) : (
+            <>
+              <input
+                value={newLeagueName}
+                onChange={(e) => setNewLeagueName(e.target.value)}
+                placeholder="Nazwa ligi..."
+                style={{
+                  ...selectStyle,
+                  minWidth: 180,
+                }}
+                disabled={creatingLeague}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    void createLeague()
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => void createLeague()}
+                disabled={creatingLeague || !newLeagueName.trim()}
+                style={minorButton(creatingLeague || !newLeagueName.trim())}
+              >
+                {creatingLeague ? 'Tworze...' : 'Utworz'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLeagueCreate(false)
+                  setNewLeagueName('')
+                  setLeagueError(null)
+                }}
+                disabled={creatingLeague}
+                style={minorButton(creatingLeague)}
+              >
+                Anuluj
+              </button>
+            </>
+          )}
         </div>
-
-      </div>
+      </nav>
+      {leagueError && (
+        <div
+          style={{
+            marginTop: 8,
+            color: '#ffd5dc',
+            fontSize: 13,
+            fontWeight: 700,
+            paddingLeft: 4,
+          }}
+        >
+          {leagueError}
+        </div>
+      )}
     </div>
   )
 }
@@ -380,7 +295,7 @@ function Nav() {
 export default function App() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif' }}>
-      <Nav />
+      <TopNav />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/players" element={<PlayersPage />} />

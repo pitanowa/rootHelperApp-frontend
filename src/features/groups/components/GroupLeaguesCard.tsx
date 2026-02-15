@@ -34,12 +34,12 @@ export default function GroupLeaguesCard({
           disabled={loading}
           style={ui.field}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(250,204,21,0.32)'
-            e.currentTarget.style.boxShadow = '0 18px 44px rgba(250,204,21,0.10)'
+            e.currentTarget.style.borderColor = 'rgba(211,160,85,0.5)'
+            e.currentTarget.style.boxShadow = '0 18px 44px rgba(96,70,34,0.24)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'
+            e.currentTarget.style.borderColor = 'rgba(213,128,139,0.3)'
             e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.25)'
             e.currentTarget.style.transform = 'translateY(0)'
           }}
@@ -72,13 +72,13 @@ export default function GroupLeaguesCard({
             style={ui.leagueLink}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.borderColor = 'rgba(59,130,246,0.25)'
-              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.35), 0 0 40px rgba(59,130,246,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(255,95,116,0.52)'
+              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.42), 0 0 40px rgba(137,19,40,0.18)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
-              e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.35)'
+              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.42)'
             }}
           >
             <div style={{ minWidth: 0 }}>

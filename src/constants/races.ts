@@ -12,13 +12,13 @@ import rats from '../assets/races/root_rats.png'
 export const RACE_LABEL = {
   CATS: 'Markiza de Kot',
   EAGLES: 'Dynastia Orlich Gniazd',
-  ALLIANCE: 'Sojusz Stworzen Lesnych',
-  VAGABOND: 'Wloczega',
+  ALLIANCE: 'Sojusz Stworzeń Leśnych',
+  VAGABOND: 'Włóczęga',
   OTTERS: 'Kompania Plemion Rzecznych',
-  LIZARDS: 'Jaszczurzy Kultysci',
-  MOLES: 'Podziemne Ksiestwo',
-  RATS: 'Wladca Szczurow',
-  BADGERS: 'Zelazna Straz',
+  LIZARDS: 'Jaszczurzy Kultyści',
+  MOLES: 'Podziemne Księstwo',
+  RATS: 'Władca Szczurów',
+  BADGERS: 'Żelazna Straż',
   CROWS: 'Krucza Konspiracja',
 } as const
 

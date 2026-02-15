@@ -16,17 +16,19 @@ export default function GroupsPage() {
 
   return (
     <div style={groupsPageUi.page}>
-      <GroupsHeaderCard
-        name={name}
-        loading={loading}
-        error={error}
-        onNameChange={setName}
-        onCreateGroup={createGroup}
-        onRefresh={loadGroups}
-        ui={groupsPageUi}
-      />
+      <div style={groupsPageUi.backdrop}>
+        <GroupsHeaderCard
+          name={name}
+          loading={loading}
+          error={error}
+          onNameChange={setName}
+          onCreateGroup={createGroup}
+          onRefresh={loadGroups}
+          ui={groupsPageUi}
+        />
 
-      <GroupsList groups={sortedGroups} ui={groupsPageUi} />
+        <GroupsList groups={sortedGroups} ui={groupsPageUi} />
+      </div>
     </div>
   )
 }

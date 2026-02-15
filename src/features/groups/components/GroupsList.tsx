@@ -25,14 +25,14 @@ export default function GroupsList({ groups, ui }: Props) {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
-              e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.35)'
-              e.currentTarget.style.background = 'linear-gradient(180deg, rgba(18,18,22,1), rgba(12,12,14,1))'
+              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.42)'
+              e.currentTarget.style.background = 'linear-gradient(180deg, rgba(26,9,14,0.95), rgba(14,5,9,0.98))'
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div style={ui.groupName}>{g.name}</div>
-              <div style={{ fontSize: 12, opacity: 0.72, marginTop: 3, color: 'rgba(255,255,255,0.70)' }}>
+              <div style={{ fontSize: 12, opacity: 0.78, marginTop: 3, color: 'rgba(233,200,205,0.78)' }}>
                 Open leagues and matches →
               </div>
             </div>
