@@ -954,8 +954,3 @@ export default function RaceDraftView({
     </div>
   )
 }
-
-
-
-
-
