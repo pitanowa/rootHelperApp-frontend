@@ -63,8 +63,8 @@ export default function LeagueCreateMatchCard({
               e.currentTarget.style.transform = 'translateY(-1px)'
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.06)'
+              e.currentTarget.style.borderColor = 'rgba(209,110,122,0.3)'
+              e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
               e.currentTarget.style.boxShadow = 'none'
               e.currentTarget.style.transform = 'translateY(0)'
             }}

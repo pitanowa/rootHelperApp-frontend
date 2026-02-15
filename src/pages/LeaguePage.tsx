@@ -46,50 +46,53 @@ export default function LeaguePage() {
   })
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: 16, fontFamily: 'system-ui, sans-serif' }}>
-      <LeaguePageHeader
-        loading={loading}
-        error={error}
-        onRefresh={load}
-      />
+    <div style={leaguePageUi.page}>
+      <div style={leaguePageUi.backdrop}>
+        <LeaguePageHeader
+          loading={loading}
+          error={error}
+          onRefresh={load}
+          ui={leaguePageUi}
+        />
 
-      <LeagueStandingsCard standings={standings} ui={leaguePageUi} />
+        <LeagueStandingsCard standings={standings} ui={leaguePageUi} />
 
-      <LeagueCreateMatchCard
-        players={players}
-        selected={selected}
-        timerSeconds={timerSeconds}
-        ranked={ranked}
-        landmarksEnabled={landmarksEnabled}
-        raceDraftEnabled={raceDraftEnabled}
-        loading={loading}
-        onTimerChange={setTimerSeconds}
-        onRankedChange={setRanked}
-        onLandmarksEnabledChange={setLandmarksEnabled}
-        onRaceDraftEnabledChange={setRaceDraftEnabled}
-        onTogglePlayer={togglePlayer}
-        onCreateMatch={createMatch}
-        ui={leaguePageUi}
-      />
+        <LeagueCreateMatchCard
+          players={players}
+          selected={selected}
+          timerSeconds={timerSeconds}
+          ranked={ranked}
+          landmarksEnabled={landmarksEnabled}
+          raceDraftEnabled={raceDraftEnabled}
+          loading={loading}
+          onTimerChange={setTimerSeconds}
+          onRankedChange={setRanked}
+          onLandmarksEnabledChange={setLandmarksEnabled}
+          onRaceDraftEnabledChange={setRaceDraftEnabled}
+          onTogglePlayer={togglePlayer}
+          onCreateMatch={createMatch}
+          ui={leaguePageUi}
+        />
 
-      <LeagueHistoryCard
-        matches={matches}
-        loading={loading}
-        summaryLoading={summaryLoading}
-        onOpenSummary={openMatchSummary}
-        onUpdateMatchRanked={updateMatchRanked}
-        onRenameMatch={async (matchId, currentName) => {
-          const next = window.prompt('Match name:', currentName ?? '')
-          if (next === null) return
-          await saveMatchName(matchId, next)
-        }}
-        onDeleteMatch={async (matchId) => {
-          const ok = window.confirm('Delete match? If FINISHED+RANKED it will rollback standings.')
-          if (!ok) return
-          await deleteMatch(matchId)
-        }}
-        ui={leaguePageUi}
-      />
+        <LeagueHistoryCard
+          matches={matches}
+          loading={loading}
+          summaryLoading={summaryLoading}
+          onOpenSummary={openMatchSummary}
+          onUpdateMatchRanked={updateMatchRanked}
+          onRenameMatch={async (matchId, currentName) => {
+            const next = window.prompt('Match name:', currentName ?? '')
+            if (next === null) return
+            await saveMatchName(matchId, next)
+          }}
+          onDeleteMatch={async (matchId) => {
+            const ok = window.confirm('Delete match? If FINISHED+RANKED it will rollback standings.')
+            if (!ok) return
+            await deleteMatch(matchId)
+          }}
+          ui={leaguePageUi}
+        />
+      </div>
 
       <MatchSummaryModal
         open={summaryOpen && !!summary}

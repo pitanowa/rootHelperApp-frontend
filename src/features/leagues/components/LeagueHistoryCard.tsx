@@ -54,7 +54,7 @@ export default function LeagueHistoryCard({
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
+                  e.currentTarget.style.borderColor = 'rgba(173,55,69,0.26)'
                   e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.30)'
                 }}
               >

@@ -1,34 +1,40 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import type { LeaguePageUi } from '../leaguePageUi'
 
 type Props = {
   loading: boolean
   error: string | null
   onRefresh: () => void | Promise<void>
+  ui: LeaguePageUi
 }
 
-export default function LeaguePageHeader({ loading, error, onRefresh }: Props) {
+export default function LeaguePageHeader({ loading, error, onRefresh, ui }: Props) {
   return (
-    <>
-      <h1 style={{ marginTop: 12, marginBottom: 8 }}>League</h1>
+    <div style={ui.headerCard}>
+      <h1 style={{ marginTop: 0, marginBottom: 8 }}>League</h1>
 
-      {error && (
-        <div style={{ padding: 12, borderRadius: 12, border: '1px solid #f3c', marginBottom: 12 }}>
+      <div style={{ fontSize: 12, color: 'rgba(233,200,205,0.8)', marginBottom: 10 }}>
+        Manage standings, create matches, and keep the war log tidy.
+      </div>
+
+      {error ? (
+        <div style={ui.error}>
           <b>Error:</b> {error}
         </div>
-      )}
+      ) : null}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/groups" style={{ textDecoration: 'none' }}>
-          ← back
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <Link to="/groups" style={ui.backLink}>
+          � back
         </Link>
         <button
           onClick={onRefresh}
           disabled={loading}
-          style={{ background: '#ffffff', padding: '8px 12px', borderRadius: 10, border: '1px solid #ccc', cursor: 'pointer' }}
+          style={{ ...ui.refreshBtn, opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
         >
           Refresh
         </button>
       </div>
-    </>
+    </div>
   )
 }
