@@ -195,7 +195,7 @@ const ui = {
                 variant === 'danger'
                     ? '1px solid rgba(248,113,113,0.35)'
                     : variant === 'primary'
-                        ? '1px solid rgba(59,130,246,0.35)'
+                        ? '1px solid rgba(255,95,116,0.42)'
                         : variant === 'cards'
                             ? '1px solid rgba(124, 11, 11, 0.4)'
                             : variant === 'race'
@@ -205,7 +205,7 @@ const ui = {
                 variant === 'danger'
                     ? 'linear-gradient(135deg, rgba(220,38,38,0.88), rgba(127,29,29,0.88))'
                     : variant === 'primary'
-                        ? 'linear-gradient(135deg, rgba(59,130,246,0.92), rgba(99,102,241,0.92))'
+                        ? 'linear-gradient(135deg, rgba(159,27,49,0.74), rgba(81,10,20,0.64))'
                         : variant === 'cards'
                             ? 'linear-gradient(135deg, rgba(109, 15, 21, 0.92), rgba(0, 0, 0, 0.92))'
                             : variant === 'race'
@@ -582,8 +582,8 @@ const ui = {
         ({
             padding: '8px 10px',
             borderRadius: 999,
-            border: active ? '1px solid rgba(59,130,246,0.42)' : '1px solid rgba(255,255,255,0.14)',
-            background: active ? 'rgba(59,130,246,0.16)' : 'rgba(255,255,255,0.05)',
+            border: active ? '1px solid rgba(255,95,116,0.42)' : '1px solid rgba(255,255,255,0.14)',
+            background: active ? 'rgba(159,27,49,0.22)' : 'rgba(255,255,255,0.05)',
             color: 'rgba(255,255,255,0.92)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -705,7 +705,7 @@ const ui = {
     summaryOverlay: {
         position: 'fixed',
         inset: 0,
-        background: 'radial-gradient(1200px 800px at 20% 10%, rgba(59,130,246,0.20), transparent 60%), rgba(0,0,0,0.72)',
+        background: 'radial-gradient(1200px 800px at 20% 10%, rgba(159,27,49,0.24), transparent 60%), rgba(0,0,0,0.72)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -719,7 +719,7 @@ const ui = {
         borderRadius: 26,
         border: '1px solid rgba(255,255,255,0.12)',
         background: 'linear-gradient(180deg, rgba(16,16,22,1), rgba(10,10,12,1))',
-        boxShadow: '0 40px 140px rgba(0,0,0,0.70), 0 0 80px rgba(59,130,246,0.18)',
+        boxShadow: '0 40px 140px rgba(0,0,0,0.70), 0 0 80px rgba(159,27,49,0.22)',
         overflow: 'hidden',
         display: 'grid',
         gridTemplateRows: 'auto 1fr auto',

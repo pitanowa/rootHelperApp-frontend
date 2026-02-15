@@ -7,7 +7,6 @@ import RacePickView from './RacePickPage'
 import { CARDS } from '../data/cards'
 import MatchPlayersSection from '../features/matches/components/MatchPlayersSection'
 import MatchActionsBar from '../features/matches/components/MatchActionsBar'
-import MatchLandmarksPanel from '../features/matches/components/MatchLandmarksPanel'
 import MatchTopBar from '../features/matches/components/MatchTopBar'
 import { useCardsFilters } from '../features/matches/hooks/useCardsFilters'
 import { useMatchController } from '../features/matches/hooks/useMatchController'
@@ -181,6 +180,10 @@ export default function MatchPage() {
             runningPlayerId={runningPlayerId}
             loading={loading}
             matchStarted={!!matchStarted}
+            landmarksEnabled={state.landmarksEnabled}
+            landmarkBanned={state.landmarkBanned}
+            landmarksDrawn={state.landmarksDrawn ?? []}
+            landmarksRandomCount={state.landmarksRandomCount ?? null}
             scoreInput={scoreInput}
             setScoreInput={setScoreInput}
             mixRgba={mixRgba}
@@ -225,8 +228,8 @@ export default function MatchPage() {
           loading={loading}
           saving={summarySaving}
           title="Match Summary"
-          subtitle={summary ? `match #${summary.matchId} • league #${summary.leagueId} • ${summary.ranked ? 'ranked' : 'casual'}` : undefined}
-          accentHex="#3b82f6"
+          subtitle={summary ? `match #${summary.matchId} | league #${summary.leagueId} | ${summary.ranked ? 'ranked' : 'casual'}` : undefined}
+          accentHex="#c1263d"
           onClose={() => setSummaryOpen(false)}
           onSave={saveSummaryAndExit}
         >
@@ -239,10 +242,9 @@ export default function MatchPage() {
             />
           ) : null}
         </MatchSummaryModal>
-
-        {state && <MatchLandmarksPanel state={state} ui={matchPageUi} />}
       </div>
     </div>
   )
 }
+
 
