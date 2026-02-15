@@ -1,22 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiDelete, apiGet, apiPost } from '../api'
 import type { Player } from '../types'
 import { MatchSummaryModal } from "../components/modals/MatchSummary"
 import { MatchSummaryView } from "../components/match/MatchSummaryView"
-import { RACE_LABEL } from "../constants/races"
+import { toErrorMessage } from '../shared/errors'
 import battlefield from "../assets/backgrounds/root_match_summary.png";
 
-import cats from '../assets/races/root_cats.png'
-import dynasty from '../assets/races/root_dynasty.png'
-import alliance from '../assets/races/root_alliance.png'
-import crows from '../assets/races/root_crows.png'
-import vaga from '../assets/races/root_vaga.png'
-import priests from '../assets/races/root_priests.png'
-import riverfolk from '../assets/races/root_riverfolk.png'
-import knights from '../assets/races/root_knights.png'
-import kingdom from '../assets/races/root_kingdom.png'
-import rats from '../assets/races/root_rats.png'
 
 type StandingRow = {
     playerId: number
@@ -359,15 +349,15 @@ const ui = {
     } as const,
 
     rowHoverOn: (el: HTMLDivElement | HTMLTableRowElement) => {
-        ; (el as any).style.transform = 'translateY(-1px)'
-            ; (el as any).style.boxShadow = '0 22px 70px rgba(0,0,0,0.38), 0 0 40px rgba(220,38,38,0.10)'
-            ; (el as any).style.borderColor = 'rgba(220,38,38,0.18)'
+        el.style.transform = 'translateY(-1px)'
+        el.style.boxShadow = '0 22px 70px rgba(0,0,0,0.38), 0 0 40px rgba(220,38,38,0.10)'
+        el.style.borderColor = 'rgba(220,38,38,0.18)'
     },
 
     rowHoverOff: (el: HTMLDivElement | HTMLTableRowElement) => {
-        ; (el as any).style.transform = 'translateY(0)'
-            ; (el as any).style.boxShadow = 'none'
-            ; (el as any).style.borderColor = 'rgba(255,255,255,0.10)'
+        el.style.transform = 'translateY(0)'
+        el.style.boxShadow = 'none'
+        el.style.borderColor = 'rgba(255,255,255,0.10)'
     },
 
 
@@ -709,79 +699,6 @@ const ui = {
     playerName: { fontWeight: 1000, letterSpacing: 0.2 } as const,
 }
 
-function normalizeRace(race?: string | null) {
-    if (!race) return ''
-    return race
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-}
-
-function raceKey(race?: string | null) {
-    if (!race) return ''
-    const raw = race.trim()
-    if (RACE_ICON[raw]) return raw
-
-    const n = normalizeRace(raw)
-    const ALIASES: Record<string, string> = {
-        koty: 'CATS',
-        orly: 'EAGLES',
-        'sojusz zwierzat': 'ALLIANCE',
-        kruki: 'CROWS',
-        wedrowiec: 'VAGABOND',
-        jaszczury: 'LIZARDS',
-        wydry: 'OTTERS',
-        borsuki: 'BADGERS',
-        krety: 'MOLES',
-        szczury: 'RATS',
-
-        cats: 'CATS',
-        eagles: 'EAGLES',
-        alliance: 'ALLIANCE',
-        crows: 'CROWS',
-        vagabond: 'VAGABOND',
-        lizards: 'LIZARDS',
-        otters: 'OTTERS',
-        badgers: 'BADGERS',
-        moles: 'MOLES',
-        rats: 'RATS',
-    }
-
-    return ALIASES[n] ?? raw.toUpperCase()
-}
-
-function raceLabel(race?: string | null) {
-    const rk = raceKey(race)
-    return rk ? (RACE_LABEL[rk] ?? rk) : '—'
-}
-
-const RACE_ICON: Record<string, string> = {
-    CATS: cats,
-    EAGLES: dynasty,
-    ALLIANCE: alliance,
-    CROWS: crows,
-    VAGABOND: vaga,
-    LIZARDS: priests,
-    OTTERS: riverfolk,
-    BADGERS: knights,
-    MOLES: kingdom,
-    RATS: rats,
-}
-
-const RACE_COLOR: Record<string, string> = {
-    CATS: '#da8608',
-    EAGLES: '#02309c',
-    ALLIANCE: '#16a34a',
-    CROWS: '#6d28d9',
-    VAGABOND: '#553c3c',
-    LIZARDS: '#e0cc15',
-    OTTERS: '#0fc2aa',
-    BADGERS: '#4d4d4d',
-    MOLES: '#e69a7b',
-    RATS: '#dc2626',
-}
 
 export default function LeaguePage() {
     const { leagueId } = useParams()
@@ -826,8 +743,8 @@ export default function LeaguePage() {
 
             const ids = new Set(rows.map((r) => r.playerId))
             setSelected((prev) => prev.filter((id) => ids.has(id)))
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to load league')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to load league'))
         } finally {
             setLoading(false)
         }
@@ -841,8 +758,8 @@ export default function LeaguePage() {
         try {
             const s = await apiGet<MatchSummary>(`/api/matches/${matchId}/summary`)
             setSummary(s)
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to load match summary')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to load match summary'))
             setSummaryOpen(false)
         } finally {
             setSummaryLoading(false)
@@ -857,8 +774,8 @@ export default function LeaguePage() {
         try {
             await apiDelete<void>(`/api/matches/${matchId}`)
             await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to delete match')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to delete match'))
         } finally {
             setLoading(false)
         }
@@ -870,8 +787,8 @@ export default function LeaguePage() {
         try {
             await apiPost<void>(`/api/matches/${matchId}/ranked`, { ranked: rankedNext })
             await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to update match ranked flag')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to update match ranked flag'))
         } finally {
             setLoading(false)
         }
@@ -883,8 +800,8 @@ export default function LeaguePage() {
         try {
             await apiPost<void>(`/api/matches/${matchId}/name`, { name })
             await load()
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to set match name')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to set match name'))
         } finally {
             setLoading(false)
         }
@@ -918,8 +835,8 @@ export default function LeaguePage() {
                 landmarksEnabled,
             })
             nav(`/matches/${match.id}`)
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to create match')
+        } catch (e: unknown) {
+            setError(toErrorMessage(e, 'Failed to create match'))
         } finally {
             setLoading(false)
         }
@@ -1011,7 +928,7 @@ export default function LeaguePage() {
                                         >
                                             <td style={{ ...ui.standingsTdDark, width: 70 }}>
                                                 <span style={ui.standingsRankPillDark(rank)}>
-                                                    {rank === 1 ? '👑' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
+                                                    {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}
                                                 </span>
                                             </td>
 
@@ -1270,7 +1187,7 @@ export default function LeaguePage() {
                                                 {m.status === 'FINISHED' ? '✅' : m.status === 'DRAFT' ? '🧪' : '⚔️'} {m.status}
                                             </span>
                                             <span style={ui.modeChip(m.ranked)}>
-                                                {m.ranked ? '🏅 RANKED' : '🍻 CASUAL'}
+                                                {m.ranked ? '🏆 RANKED' : '🍻 CASUAL'}
                                             </span>
                                         </div>
 
@@ -1391,13 +1308,13 @@ export default function LeaguePage() {
                     <MatchSummaryView
                         summary={summary}
                         mode="readonly"
-                        raceKey={raceKey}
-                        raceLabel={raceLabel}
-                        RACE_ICON={RACE_ICON}
-                        RACE_COLOR={RACE_COLOR}
                     />
                 ) : null}
             </MatchSummaryModal>
         </div>
     )
 }
+
+
+
+

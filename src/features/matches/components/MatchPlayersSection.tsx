@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction, CSSProperties } from 'react'
 import type { MatchPlayerState } from '../types'
+import { raceKey, raceLabel, RACE_COLOR, RACE_ICON } from '../../../constants/races'
 
 type MatchPlayersSectionUi = {
   layout: CSSProperties
@@ -37,11 +38,7 @@ type Props = {
   matchStarted: boolean
   scoreInput: Record<number, string>
   setScoreInput: Dispatch<SetStateAction<Record<number, string>>>
-  raceKey: (race?: string | null) => string
-  raceLabel: (race?: string | null) => string
   mixRgba: (baseHex: string, alpha: number) => string
-  RACE_COLOR: Record<string, string>
-  RACE_ICON: Record<string, string>
   ui: MatchPlayersSectionUi
   onRemoveSecond: (playerId: number) => void | Promise<void>
   onAddSecond: (playerId: number) => void | Promise<void>
@@ -62,11 +59,7 @@ export default function MatchPlayersSection({
   matchStarted,
   scoreInput,
   setScoreInput,
-  raceKey,
-  raceLabel,
   mixRgba,
-  RACE_COLOR,
-  RACE_ICON,
   ui,
   onRemoveSecond,
   onAddSecond,
@@ -386,4 +379,3 @@ function fmt(secs: number) {
   const r = s % 60
   return `${m}:${String(r).padStart(2, '0')}`
 }
-

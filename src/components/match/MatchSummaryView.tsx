@@ -1,5 +1,6 @@
 import Tooltip from "../../components/Tooltip";
 import { lmTooltipContent, type LandmarkId, lmLabel } from "../../data/landmarks";
+import { raceKey, raceLabel, RACE_COLOR, RACE_ICON } from "../../constants/races";
 
 type Mode = "edit" | "readonly";
 
@@ -29,11 +30,6 @@ export function MatchSummaryView({
     mode,
     description,
     setDescription,
-
-    raceKey,
-    raceLabel,
-    RACE_ICON,
-    RACE_COLOR,
 }: {
     summary: {
         matchId: number;
@@ -49,11 +45,6 @@ export function MatchSummaryView({
     mode: Mode;
     description?: string;
     setDescription?: (v: string) => void;
-
-    raceKey: (race?: string | null) => string;
-    raceLabel: (race?: string | null) => string;
-    RACE_ICON: Record<string, string>;
-    RACE_COLOR: Record<string, string>;
 }) {
     const mix = (hex: string, a: number) => {
         const h = hex.replace("#", "");

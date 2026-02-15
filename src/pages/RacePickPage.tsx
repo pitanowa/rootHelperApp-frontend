@@ -3,6 +3,7 @@ import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/l
 import Tooltip from '../components/Tooltip'
 import type { CSSProperties } from 'react'
 import type { MatchPlayerState } from '../features/matches/types'
+import { raceKey, raceLabel, RACE_COLOR, RACE_ICON, RACE_IDS } from '../constants/races'
 
 type RacePickUi = {
   page: CSSProperties
@@ -23,10 +24,6 @@ type Props = {
   onPick: (playerId: number, race: string) => Promise<void> | void
   onRefresh: () => void
 
-  raceKey: (race?: string | null) => string
-  raceLabel: (race?: string | null) => string
-  RACE_ICON: Record<string, string>
-  RACE_COLOR: Record<string, string>
   ui: RacePickUi
   landmarksEnabled?: boolean
   landmarkBanned?: string | null
@@ -42,10 +39,6 @@ export default function RacePickView(props: Props) {
     error,
     onPick,
     onRefresh,
-    raceKey,
-    raceLabel,
-    RACE_ICON,
-    RACE_COLOR,
     ui,
 
     landmarksEnabled,
@@ -78,9 +71,9 @@ export default function RacePickView(props: Props) {
       if (rk) s.add(rk)
     }
     return s
-  }, [players, raceKey])
+  }, [players])
 
-  const pool = useMemo(() => Object.keys(RACE_ICON), [RACE_ICON])
+  const pool = useMemo(() => RACE_IDS, [])
 
   const selectedPlayer = players.find((p) => p.playerId === selectedPlayerId) ?? players[0] ?? null
 

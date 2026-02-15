@@ -1,36 +1,13 @@
-import { RACE_LABEL } from '../constants/races'
+﻿import { RACE_ICON, RACE_IDS, raceLabel } from '../constants/races'
 import { useEffect, useMemo, useState } from 'react'
-import cats from '../assets/races/root_cats.png'
-import dynasty from '../assets/races/root_dynasty.png'
-import alliance from '../assets/races/root_alliance.png'
-import crows from '../assets/races/root_crows.png'
-import vaga from '../assets/races/root_vaga.png'
-import priests from '../assets/races/root_priests.png'
-import riverfolk from '../assets/races/root_riverfolk.png'
-import knights from '../assets/races/root_knights.png'
-import kingdom from '../assets/races/root_kingdom.png'
-import rats from '../assets/races/root_rats.png'
+import type { CSSProperties } from 'react'
 import Tooltip from '../components/Tooltip'
 import { LANDMARKS, lmLabel, lmTooltipContent, type LandmarkId } from '../data/landmarks'
 
 
-const RACE_ICON: Record<string, string> = {
-  CATS: cats,
-  EAGLES: dynasty,
-  ALLIANCE: alliance,
-  CROWS: crows,
-  VAGABOND: vaga,
-  LIZARDS: priests,
-  OTTERS: riverfolk,
-  BADGERS: knights,
-  MOLES: kingdom,
-  RATS: rats,
-}
-
 // kanoniczna lista ras (musi się zgadzać z backendem)
-const ALL_RACES = Object.keys(RACE_ICON)
+const ALL_RACES = RACE_IDS
 const VAGABOND = 'VAGABOND'
-const raceLabel = (race?: string | null) => (race ? RACE_LABEL[race] ?? race : '—')
 
 export type MatchPlayerState = {
   playerId: number
@@ -149,7 +126,7 @@ const ui = {
 
   // Badges
   badge: (variant: 'hot' | 'ghost' | 'ok' | 'info') => {
-    const base = {
+    const base: CSSProperties = {
       display: 'inline-flex',
       alignItems: 'center',
       gap: 8,
@@ -160,9 +137,9 @@ const ui = {
       fontSize: 12,
       letterSpacing: 0.4,
       userSelect: 'none',
-    } as const
+    }
 
-    const map = {
+    const map: Record<'hot' | 'ghost' | 'ok' | 'info', CSSProperties> = {
       hot: {
         background: 'linear-gradient(135deg, rgba(220,38,38,0.90), rgba(127,29,29,0.88))',
         color: 'rgba(255,255,255,0.95)',
@@ -181,9 +158,9 @@ const ui = {
         color: 'rgba(255,255,255,0.78)',
         opacity: 0.9,
       },
-    } as const
+    }
 
-    return { ...base, ...(map[variant] as any) }
+    return { ...base, ...map[variant] }
   },
 
   // Buttons
@@ -403,7 +380,7 @@ export default function RaceDraftView({
   onPick: (playerId: number, race: string) => void | Promise<void>
   onSetBans?: (bans: string[]) => void | Promise<void>
   onRefresh?: () => void
-  onResetPick?: () => Promise<any>
+  onResetPick?: () => Promise<unknown>
   landmarksEnabled?: boolean
   landmarksBanned?: string | null
   landmarksRandomCount?: number | null
@@ -977,3 +954,8 @@ export default function RaceDraftView({
     </div>
   )
 }
+
+
+
+
+

@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import type { CSSProperties } from 'react'
 import type { MatchPlayerState } from '../../features/matches/types'
+import { raceKey, raceLabel, RACE_COLOR, RACE_ICON } from '../../constants/races'
 
 type SetupModalUi = {
   overlay: CSSProperties
@@ -23,12 +24,7 @@ type Props = {
   mid: number
   setFlowStage: React.Dispatch<React.SetStateAction<'NONE' | 'SETUP'>>
 
-  raceKey: (race?: string | null) => string
-  raceLabel: (race?: string | null) => string
   setupTextForRace: (race?: string | null) => string
-
-  RACE_COLOR: Record<string, string>
-  RACE_ICON: Record<string, string>
 
   lsSetBool: (key: string, val: boolean) => void
   LS_SETUP: (mid: number) => string
@@ -45,11 +41,7 @@ export default function SetupModal(props: Props) {
     setSetupIndex,
     mid,
     setFlowStage,
-    raceKey,
-    raceLabel,
     setupTextForRace,
-    RACE_COLOR,
-    RACE_ICON,
     lsSetBool,
     LS_SETUP,
     ui,

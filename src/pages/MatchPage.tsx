@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { apiPost } from '../api'
 import RaceDraftView from './RaceDraftPage'
-import { RACE_LABEL } from '../constants/races'
+import { raceKey } from '../constants/races'
 import SetupModal from '../components/modals/SetupModal'
 import CardsModal from '../components/modals/CardsModal'
 import RacePickView from './RacePickPage'
@@ -11,17 +11,6 @@ import Tooltip from '../components/Tooltip'
 import { MatchSummaryModal } from "../components/modals/MatchSummary"
 import { MatchSummaryView } from "../components/match/MatchSummaryView"
 
-// ✅ adjust these imports to your actual icon paths
-import cats from '../assets/races/root_cats.png'
-import dynasty from '../assets/races/root_dynasty.png'
-import alliance from '../assets/races/root_alliance.png'
-import crows from '../assets/races/root_crows.png'
-import vaga from '../assets/races/root_vaga.png'
-import priests from '../assets/races/root_priests.png'
-import riverfolk from '../assets/races/root_riverfolk.png'
-import knights from '../assets/races/root_knights.png'
-import kingdom from '../assets/races/root_kingdom.png'
-import rats from '../assets/races/root_rats.png'
 import { CARDS } from '../data/cards'
 import type { DraftState, MatchPlayerState } from '../features/matches/types'
 import MatchPlayersSection from '../features/matches/components/MatchPlayersSection'
@@ -891,84 +880,6 @@ const ui = {
 
 }
 
-function normalizeRace(race?: string | null) {
-    if (!race) return ''
-    return race
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-}
-
-function raceKey(race?: string | null) {
-    if (!race) return ''
-    // Jeśli backend wysyła np. "RATS" -> zostanie "RATS"
-    const raw = race.trim()
-    if (RACE_ICON[raw]) return raw
-
-    // jeśli backend wysyła np. "Szczury"/"Rats"/cokolwiek -> ujednolicamy
-    const n = normalizeRace(raw)
-
-    const ALIASES: Record<string, string> = {
-        // PL (jeśli kiedyś wrócą)
-        koty: 'CATS',
-        orly: 'EAGLES',
-        'sojusz zwierzat': 'ALLIANCE',
-        kruki: 'CROWS',
-        wedrowiec: 'VAGABOND',
-        jaszczury: 'LIZARDS',
-        wydry: 'OTTERS',
-        borsuki: 'BADGERS',
-        krety: 'MOLES',
-        szczury: 'RATS',
-
-        // EN (na wszelki wypadek)
-        cats: 'CATS',
-        eagles: 'EAGLES',
-        alliance: 'ALLIANCE',
-        crows: 'CROWS',
-        vagabond: 'VAGABOND',
-        lizards: 'LIZARDS',
-        otters: 'OTTERS',
-        badgers: 'BADGERS',
-        moles: 'MOLES',
-        rats: 'RATS',
-    }
-
-    return ALIASES[n] ?? raw.toUpperCase()
-}
-
-function raceLabel(race?: string | null) {
-    const rk = raceKey(race)
-    return rk ? (RACE_LABEL[rk] ?? rk) : '—'
-}
-
-const RACE_ICON: Record<string, string> = {
-    CATS: cats,
-    EAGLES: dynasty,
-    ALLIANCE: alliance,
-    CROWS: crows,
-    VAGABOND: vaga,
-    LIZARDS: priests,
-    OTTERS: riverfolk,
-    BADGERS: knights,
-    MOLES: kingdom,
-    RATS: rats,
-}
-
-const RACE_COLOR: Record<string, string> = {
-    CATS: '#da8608',
-    EAGLES: '#02309c',
-    ALLIANCE: '#16a34a',
-    CROWS: '#6d28d9',
-    VAGABOND: '#553c3c',
-    LIZARDS: '#e0cc15',
-    OTTERS: '#0fc2aa',
-    BADGERS: '#4d4d4d',
-    MOLES: '#e69a7b',
-    RATS: '#dc2626',
-}
 
 
 function hexToRgba(hex: string, alpha: number) {
@@ -981,9 +892,14 @@ function hexToRgba(hex: string, alpha: number) {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback
+}
+
 function playAlarm() {
+    const maybeWebkitWindow = window as Window & { webkitAudioContext?: typeof AudioContext }
     try {
-        const AudioCtx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined
+        const AudioCtx = window.AudioContext || maybeWebkitWindow.webkitAudioContext
         if (!AudioCtx) return
         const ctx = new AudioCtx()
         const now = ctx.currentTime
@@ -1012,10 +928,14 @@ function playAlarm() {
 
         window.setTimeout(() => {
             try {
-                ctx.close()
-            } catch { }
+                void ctx.close()
+            } catch {
+                void 0
+            }
         }, 1300)
-    } catch { }
+    } catch {
+        void 0
+    }
 }
 
 type FlowStage = 'NONE' | 'SETUP'
@@ -1033,7 +953,7 @@ function lsGetJson<T>(key: string, fallback: T): T {
         return fallback
     }
 }
-function lsSetJson(key: string, val: any) {
+function lsSetJson(key: string, val: unknown) {
     window.localStorage.setItem(key, JSON.stringify(val))
 }
 
@@ -1058,15 +978,15 @@ function lsSetBool(key: string, val: boolean) {
 
 const SETUP_HINT: Record<string, string> = {
     CATS: '1. Wybierz 3 sąsiadujące ze sobą polany ojczyste.\n2. Na każdej z nich umieść 2 wojowników.\n3. Na KAŻDEJ pozostałej połóż po jednym wojowniku.\n4. Token twierdzy połóż na jednej z polan ojczystych, która nie sąsiaduje z polanami ojczystymi przeciwników, jeśli to możliwe.\n5. Rozmieść 1 tartak, koszary oraz warsztat na każdej swojej innej polanie ojczystej.\n6. Umieść pozostałe żetony budynków na swojej planszy frakcji.',
-    EAGLES: '1. Wybierz polanę ojczystą przy krawędzi Mapy, oddaloną o co najmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść na niej gniazdo i 6 wojowników.\n3. Wybierz Przywódcę i umieść go na swojej planszy; pozostałych odłóż na bok.\n4. Umieść swoich 2 Lojalnych Wezyrów pod odpowiednimi kolumnami dekretu, wskazanymi przez wybranego Przywódcę.\n5. Umieść pozostałe gniazda na planszy swojej frakcji.',
+    EAGLES: '1. Wybierz polanę ojczystą przy krawędzi mapy, oddaloną o co najmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść na niej gniazdo i 6 wojowników.\n3. Wybierz Przywódcę i umieść go na swojej planszy; pozostałych odłóż na bok.\n4. Umieść swoich 2 Lojalnych Wezyrów pod odpowiednimi kolumnami dekretu, wskazanymi przez wybranego Przywódcę.\n5. Umieść pozostałe gniazda na planszy swojej frakcji.',
     ALLIANCE: '1. Dobierz 3 karty i umieść je w swojej talii sympatyków.\n2. Umieść tokeny sympatyków oraz żetony baz na planszy swojej frakcji.',
-    CROWS: '1. Wybierz polanę ojczystą i umieść na niej 1 wojownika i 1 dowolny żeton intrygi.\n2. Umieść 1 wojownika na 3 polanach różnego typu (czyli łącznie na planszy będzie 4 wojowników).',
-    VAGABOND: '1. Umieść swoją figurkę w dowolnym lesie.\n2. Potasuj talię misji. Dobierz z niej 3 karty i ułóż je odkryte w pobliżu.\n3. Umieść losowo 4 przedmioty w ruinach, chyba że zrobiłto już inny gracz nie grający Włóczęgą.\n4. Wybierz Włóczęgę którym zamierzasz grać i umieść jego kartę na planszy frakcji, łącznie z przedmiotami startowymi S.\n5. Umieść znaczniki relacji pozostałych frakcji na torze Relacji na polu "Neutralny".',
-    LIZARDS: '1. Wybierz polanę ojczystą, nie sąsiadującą z żadną wrogą polaną ojczystą.\n2. Umieść na niej 4 wojowników i 1 ogród zgodny z typem polany. Umieść 3 wojowników na sąsiadujących polanach, tak równo jak to możliwe.\n3. Umieść 2 wojowników na polu Akolitów.\n4. Umieść ogrody na swojej planszy frakcji.\n5. Umieść żeton Wygnańców na wybranym przez siebie typie polan, stroną Wygnańców do góry.',
-    OTTERS: '1. Umieść 4 wojowników na dowolnych polanach wzdłuż rzeki.\n2. Rozmieść 3 wojowników na polu Płatności.\n3. Rozmieść faktorie na odpowiednich torach faktorii. \n4. Ustal początkowe ceny usług.',
-    BADGERS: '1. Potajemnie przetasuj wszystkie 12 Reliktów i bez podglądania umieść po jednym w każdym lesie. Pozostałe będą potrzebne w kroku 3.\n2. Wybierz 2 sąsiadujące ojczyste polany na obrzeżach Mapy, każdą oddaloną o conajmniej 2 polany od polan ojczystych przeciwników.\n3. Umieść wszystkie pozostałe relikty w lasach tak, aby były jak najrówniej rozłożone. Nie mogą sąsiadować z twoimi polanami ojczystymi.\n4. Umieść Wierne Sługi pod każdą kolumną swojej Świty.',
-    MOLES: '1. Wybierz ojczystą polanę, nie sąsiadującą z wrogą ojczystą polaną.\n2. Umieść na niej 2 wojowników i 1 tunel. Umieść 5 wojowników na sąsiadujących polanach tak równo, jak to możliwe.\n3. Umieść Norę obok mapy. Umieść budynki cytadel i targów na planszy frakcji.\n4. Umieść 9 kart Ministrów na polu Nieprzekonanych Ministrów oraz po 3 korony w odpowiednich miejscach na planszy frakcji.',
-    RATS: '1. Wybierz polanę ojczystą przy krawędzi mapy, oddaloną o conajmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść swojego Lorda, 4 wojowników i Warownię na tej polanie.\n3. Umieść kartę nastroju Uparty na polu Karty Nastroju.\n4. Umieść 4 przedmioty w ruinach (jesli jeszcze nie zostało to zrobione).',
+    CROWS: '1. Wybierz polanę ojczystą i umieść na niej 1 wojownika oraz 1 dowolny żeton intrygi.\n2. Umieść 1 wojownika na 3 polanach różnego typu (czyli łącznie na planszy będzie 4 wojowników).',
+    VAGABOND: '1. Umieść swoją figurkę w dowolnym lesie.\n2. Potasuj talię misji. Dobierz z niej 3 karty i ułóż je odkryte w pobliżu.\n3. Umieść losowo 4 przedmioty w ruinach, chyba że zrobił to już inny gracz niegrający Włóczęgą.\n4. Wybierz Włóczęgę, którym zamierzasz grać, i umieść jego kartę na planszy frakcji, łącznie z przedmiotami startowymi S.\n5. Umieść znaczniki relacji pozostałych frakcji na torze Relacji na polu "Neutralny".',
+    LIZARDS: '1. Wybierz polanę ojczystą, niesąsiadującą z żadną wrogą polaną ojczystą.\n2. Umieść na niej 4 wojowników i 1 ogród zgodny z typem polany. Umieść 3 wojowników na sąsiadujących polanach, tak równo, jak to możliwe.\n3. Umieść 2 wojowników na polu Akolitów.\n4. Umieść ogrody na swojej planszy frakcji.\n5. Umieść żeton Wygnańców na wybranym przez siebie typie polan, stroną Wygnańców do góry.',
+    OTTERS: '1. Umieść 4 wojowników na dowolnych polanach wzdłuż rzeki.\n2. Rozmieść 3 wojowników na polu Płatności.\n3. Rozmieść faktorie na odpowiednich torach faktorii.\n4. Ustal początkowe ceny usług.',
+    BADGERS: '1. Potajemnie przetasuj wszystkie 12 Reliktów i bez podglądania umieść po jednym w każdym lesie. Pozostałe będą potrzebne w kroku 3.\n2. Wybierz 2 sąsiadujące ojczyste polany na obrzeżach mapy, każdą oddaloną o co najmniej 2 polany od polan ojczystych przeciwników.\n3. Umieść wszystkie pozostałe relikty w lasach tak, aby były jak najrówniej rozłożone. Nie mogą sąsiadować z twoimi polanami ojczystymi.\n4. Umieść Wierne Sługi pod każdą kolumną swojej Świty.',
+    MOLES: '1. Wybierz ojczystą polanę, niesąsiadującą z wrogą ojczystą polaną.\n2. Umieść na niej 2 wojowników i 1 tunel. Umieść 5 wojowników na sąsiadujących polanach tak równo, jak to możliwe.\n3. Umieść Norę obok mapy. Umieść budynki cytadel i targów na planszy frakcji.\n4. Umieść 9 kart Ministrów na polu Nieprzekonanych Ministrów oraz po 3 korony w odpowiednich miejscach na planszy frakcji.',
+    RATS: '1. Wybierz polanę ojczystą przy krawędzi mapy, oddaloną o co najmniej 2 polany od polan ojczystych przeciwników.\n2. Umieść swojego Lorda, 4 wojowników i Warownię na tej polanie.\n3. Umieść kartę nastroju Uparty na polu Karty Nastroju.\n4. Umieść 4 przedmioty w ruinach (jeśli jeszcze nie zostało to zrobione).',
 }
 
 function setupTextForRace(race?: string | null) {
@@ -1164,7 +1084,7 @@ export default function MatchPage() {
         }
 
         return [...state.players]
-    }, [state, draft?.pickOrder, mid])
+    }, [state, draft, mid])
 
     useEffect(() => {
         if (!draft) return
@@ -1177,8 +1097,10 @@ export default function MatchPage() {
             prevStatus !== 'FINISHED' &&
             !lsGetBool(LS_SETUP(mid))
         ) {
-            setSetupIndex(0)
-            setFlowStage('SETUP')
+            window.setTimeout(() => {
+                setSetupIndex(0)
+                setFlowStage('SETUP')
+            }, 0)
         }
 
         prevDraftPhaseRef.current = draft.phase
@@ -1192,8 +1114,10 @@ export default function MatchPage() {
 
         const allPicked = state.players.every((p) => !!p.race)
         if (allPicked) {
-            setSetupIndex(0)
-            setFlowStage('SETUP')
+            window.setTimeout(() => {
+                setSetupIndex(0)
+                setFlowStage('SETUP')
+            }, 0)
         }
     }, [state, mid])
 
@@ -1214,11 +1138,11 @@ export default function MatchPage() {
                 try {
                     await apiPost<void>(`/api/matches/${mid}/start`)
                     await load()
-                } catch (e: any) {
-                    setError(e?.message ?? 'Failed to start match')
+                } catch (e: unknown) {
+                    setError(getErrorMessage(e, 'Failed to start match'))
                 }
             })()
-    }, [state, mid])
+    }, [load, mid, setError, state])
 
 
     // BLOCKING DRAFT VIEW
@@ -1232,7 +1156,7 @@ export default function MatchPage() {
                 error={error}
                 landmarksEnabled={state.landmarksEnabled}
                 landmarksBanned={state.landmarkBanned}
-                landmarksRandomCount={(state.landmarksRandomCount ?? null) as any}
+                landmarksRandomCount={state.landmarksRandomCount ?? null}
                 landmarksDrawn={state.landmarksDrawn ?? []}
                 onLandmarksBan={async (banned, randomCount) => {
                     await apiPost(`/api/matches/${mid}/landmarks/ban`, { banned, randomCount })
@@ -1242,16 +1166,16 @@ export default function MatchPage() {
                     try {
                         await apiPost(`/api/matches/${mid}/draft/pick`, { playerId, race })
                         await load()
-                    } catch (e: any) {
-                        setError(e?.message ?? 'Failed to pick race')
+                    } catch (e: unknown) {
+                        setError(getErrorMessage(e, 'Failed to pick race'))
                     }
                 }}
                 onSetBans={async (bannedRaces) => {
                     try {
                         await apiPost(`/api/matches/${mid}/draft/bans`, { bannedRaces })
                         await load()
-                    } catch (e: any) {
-                        setError(e?.message ?? 'Failed to set bans')
+                    } catch (e: unknown) {
+                        setError(getErrorMessage(e, 'Failed to set bans'))
                     }
                 }}
                 onResetPick={() => apiPost(`/api/matches/${mid}/draft/reset-pick`)}
@@ -1272,10 +1196,6 @@ export default function MatchPage() {
                 players={state!.players}
                 loading={loading}
                 error={error}
-                raceKey={raceKey}
-                raceLabel={raceLabel}
-                RACE_ICON={RACE_ICON}
-                RACE_COLOR={RACE_COLOR}
                 ui={ui}
                 landmarksEnabled={state?.landmarksEnabled}
                 landmarkBanned={state?.landmarkBanned}
@@ -1297,8 +1217,8 @@ export default function MatchPage() {
                         })
 
                         await load()
-                    } catch (e: any) {
-                        setError(e?.message ?? 'Failed to set landmarks')
+                    } catch (e: unknown) {
+                        setError(getErrorMessage(e, 'Failed to set landmarks'))
                     }
                 }}
 
@@ -1337,8 +1257,8 @@ export default function MatchPage() {
                         }
 
                         await load()
-                    } catch (e: any) {
-                        setError(e?.message ?? 'Failed to pick race')
+                    } catch (e: unknown) {
+                        setError(getErrorMessage(e, 'Failed to pick race'))
                     }
                 }}
 
@@ -1361,8 +1281,8 @@ export default function MatchPage() {
 
                         // 4) reload
                         await load()
-                    } catch (e: any) {
-                        setError(e?.message ?? 'Failed to reset race picks')
+                    } catch (e: unknown) {
+                        setError(getErrorMessage(e, 'Failed to reset race picks'))
                     }
                 }}
             />
@@ -1410,11 +1330,7 @@ export default function MatchPage() {
                         setSetupIndex={setSetupIndex}
                         mid={mid}
                         setFlowStage={setFlowStage}
-                        raceKey={raceKey}
-                        raceLabel={raceLabel}
                         setupTextForRace={setupTextForRace}
-                        RACE_COLOR={RACE_COLOR}
-                        RACE_ICON={RACE_ICON}
                         lsSetBool={lsSetBool}
                         LS_SETUP={LS_SETUP}
                         ui={ui}
@@ -1502,11 +1418,7 @@ export default function MatchPage() {
                         matchStarted={!!matchStarted}
                         scoreInput={scoreInput}
                         setScoreInput={setScoreInput}
-                        raceKey={raceKey}
-                        raceLabel={raceLabel}
                         mixRgba={mixRgba}
-                        RACE_COLOR={RACE_COLOR}
-                        RACE_ICON={RACE_ICON}
                         ui={ui}
                         onRemoveSecond={removeSecond}
                         onAddSecond={addSecond}
@@ -1564,10 +1476,6 @@ export default function MatchPage() {
                             mode="edit"
                             description={summaryDesc}
                             setDescription={setSummaryDesc}
-                            raceKey={raceKey}
-                            raceLabel={raceLabel}
-                            RACE_ICON={RACE_ICON}
-                            RACE_COLOR={RACE_COLOR}
                         />
                     ) : null}
                 </MatchSummaryModal>
@@ -1603,3 +1511,8 @@ export default function MatchPage() {
     )
 
 }
+
+
+
+
+
