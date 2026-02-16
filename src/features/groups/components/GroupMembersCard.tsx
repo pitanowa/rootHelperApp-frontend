@@ -38,12 +38,12 @@ export default function GroupMembersCard({
           disabled={loading}
           style={ui.selectField}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,95,116,0.5)'
-            e.currentTarget.style.boxShadow = '0 18px 44px rgba(137,19,40,0.28)'
+            e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.5)'
+            e.currentTarget.style.boxShadow = '0 18px 44px rgba(var(--app-accent-rgb),0.28)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(213,128,139,0.3)'
+            e.currentTarget.style.borderColor = 'rgba(var(--app-muted-rgb),0.3)'
             e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.25)'
             e.currentTarget.style.transform = 'translateY(0)'
           }}
@@ -96,12 +96,12 @@ export default function GroupMembersCard({
             style={ui.rowCard}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.borderColor = 'rgba(220,38,38,0.18)'
-              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.35), 0 0 40px rgba(220,38,38,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.18)'
+              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.35), 0 0 40px rgba(var(--app-accent-rgb),0.10)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.32)'
               e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.42)'
             }}
           >
@@ -132,3 +132,6 @@ export default function GroupMembersCard({
     </section>
   )
 }
+
+
+

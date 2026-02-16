@@ -1,8 +1,8 @@
-﻿import RacePickLandmarksSection from '../../../features/matches/components/RacePickLandmarksSection'
-import RacePickRacePool from '../../../features/matches/components/RacePickRacePool'
-import RacePickTopBar from '../../../features/matches/components/RacePickTopBar'
-import { useRacePickState } from '../../../features/matches/hooks/useRacePickState'
-import type { RacePickViewProps } from '../../../features/matches/racePickTypes'
+﻿import RacePickLandmarksSection from '../match/components/RacePickLandmarksSection'
+import RacePickRacePool from '../match/components/RacePickRacePool'
+import RacePickTopBar from '../match/components/RacePickTopBar'
+import { useRacePickState } from '../match/hooks/useRacePickState'
+import type { RacePickViewProps } from '../match/racePickTypes'
 
 export default function RacePickView(props: RacePickViewProps) {
   const {
@@ -72,4 +72,5 @@ export default function RacePickView(props: RacePickViewProps) {
     </div>
   )
 }
+
 

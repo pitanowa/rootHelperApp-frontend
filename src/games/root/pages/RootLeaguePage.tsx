@@ -8,14 +8,13 @@ import LeaguePageHeader from '../../../features/leagues/components/LeaguePageHea
 import LeagueStandingsCard from '../../../features/leagues/components/LeagueStandingsCard'
 import { useLeaguePageController } from '../../../features/leagues/hooks/useLeaguePageController'
 import { leaguePageUi } from '../../../features/leagues/leaguePageUi'
+import type { GamePageProps } from '../../../core/games/types'
 import { gameMatchPath } from '../../../routing/paths'
 import { buildRootCreateMatchPayload, getRootLeaguePageConfig, getRootStandingsColumns } from '../config'
 
-type Props = {
-  gameKey: string
-}
+type Props = GamePageProps
 
-export default function RootLeaguePage({ gameKey }: Props) {
+export default function RootLeaguePage({ gameKey, capabilities }: Props) {
   const { leagueId } = useParams()
   const lid = Number(leagueId)
   const nav = useNavigate()
@@ -50,7 +49,7 @@ export default function RootLeaguePage({ gameKey }: Props) {
   } = useLeaguePageController({
     gameKey,
     leagueId: lid,
-    getLeaguePageConfig: getRootLeaguePageConfig,
+    getLeaguePageConfig: () => getRootLeaguePageConfig(capabilities),
     buildCreateMatchPayload: buildRootCreateMatchPayload,
     onMatchCreated: (matchId) => nav(gameMatchPath(gameKey, matchId)),
   })

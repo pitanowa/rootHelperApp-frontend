@@ -20,21 +20,21 @@ export default function GroupsList({ gameKey, groups, ui }: Props) {
             style={ui.groupLink}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.borderColor = 'rgba(220,38,38,0.18)'
-              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.42), 0 0 40px rgba(220,38,38,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.18)'
+              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.42), 0 0 40px rgba(var(--app-accent-rgb),0.10)'
               e.currentTarget.style.background =
-                'radial-gradient(700px 260px at 10% 0%, rgba(220,38,38,0.14), transparent 60%), linear-gradient(180deg, rgba(18,18,22,1), rgba(12,12,14,1))'
+                'radial-gradient(700px 260px at 10% 0%, rgba(var(--app-accent-rgb),0.14), transparent 60%), linear-gradient(180deg, rgba(18,18,22,1), rgba(12,12,14,1))'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.32)'
               e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.42)'
-              e.currentTarget.style.background = 'linear-gradient(180deg, rgba(26,9,14,0.95), rgba(14,5,9,0.98))'
+              e.currentTarget.style.background = 'var(--app-panel-bg)'
             }}
           >
             <div style={{ minWidth: 0 }}>
               <div style={ui.groupName}>{g.name}</div>
-              <div style={{ fontSize: 12, opacity: 0.78, marginTop: 3, color: 'rgba(233,200,205,0.78)' }}>
+              <div style={{ fontSize: 12, opacity: 0.78, marginTop: 3, color: 'rgba(var(--app-muted-rgb),0.78)' }}>
                 Open leagues and matches →
               </div>
             </div>
@@ -50,3 +50,5 @@ export default function GroupsList({ gameKey, groups, ui }: Props) {
     </div>
   )
 }
+
+

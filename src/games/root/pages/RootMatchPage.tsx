@@ -6,23 +6,25 @@ import { MatchSummaryView } from '../../../components/match/MatchSummaryView'
 import RootRaceDraftPage from './RootRaceDraftPage'
 import RootRacePickPage from './RootRacePickPage'
 import { CARDS } from '../../../data/cards'
-import MatchPlayersSection from '../../../features/matches/components/MatchPlayersSection'
-import MatchActionsBar from '../../../features/matches/components/MatchActionsBar'
-import { useCardsFilters } from '../../../features/matches/hooks/useCardsFilters'
-import { useMatchController } from '../../../features/matches/hooks/useMatchController'
-import { useMatchPageFlow } from '../../../features/matches/hooks/useMatchPageFlow'
-import { LS_SETUP, lsGetRaceMap, lsSetBool, setupTextForRace } from '../../../features/matches/matchPageStorage'
-import { matchPageUi, mixRgba, playAlarm } from '../../../features/matches/matchPageUi'
+import MatchPlayersSection from '../match/components/MatchPlayersSection'
+import MatchActionsBar from '../match/components/MatchActionsBar'
+import { useCardsFilters } from '../match/hooks/useCardsFilters'
+import { useMatchController } from '../match/hooks/useMatchController'
+import { useMatchPageFlow } from '../match/hooks/useMatchPageFlow'
+import { LS_SETUP, lsGetRaceMap, lsSetBool, setupTextForRace } from '../match/matchPageStorage'
+import { matchPageUi, mixRgba, playAlarm } from '../match/matchPageUi'
+import type { GamePageProps } from '../../../core/games/types'
 import { gameLeaguePath } from '../../../routing/paths'
 
-type Props = {
-  gameKey: string
-}
+type Props = GamePageProps
 
-export default function MatchPage({ gameKey }: Props) {
+export default function MatchPage({ gameKey, capabilities }: Props) {
   const { matchId } = useParams()
   const nav = useNavigate()
   const mid = Number(matchId)
+
+  const supportsRaceDraft = capabilities.raceDraftSupported
+  const supportsLandmarks = capabilities.landmarksSupported
 
   const {
     state,
@@ -105,7 +107,7 @@ export default function MatchPage({ gameKey }: Props) {
     resetCardFilters,
   } = useCardsFilters(CARDS)
 
-  if (state?.raceDraftEnabled && draft && draft.status === 'DRAFTING') {
+  if (supportsRaceDraft && state?.raceDraftEnabled && draft && draft.status === 'DRAFTING') {
     return (
       <RootRaceDraftPage
         matchId={mid}
@@ -113,7 +115,7 @@ export default function MatchPage({ gameKey }: Props) {
         players={state.players}
         loading={loading}
         error={error}
-        landmarksEnabled={state.landmarksEnabled}
+        landmarksEnabled={supportsLandmarks && state.landmarksEnabled}
         landmarksBanned={state.landmarkBanned}
         landmarksRandomCount={state.landmarksRandomCount ?? null}
         landmarksDrawn={state.landmarksDrawn ?? []}
@@ -126,7 +128,7 @@ export default function MatchPage({ gameKey }: Props) {
     )
   }
 
-  if (needsRacePick && state) {
+  if (supportsRaceDraft && needsRacePick && state) {
     return (
       <RootRacePickPage
         matchId={mid}
@@ -134,7 +136,7 @@ export default function MatchPage({ gameKey }: Props) {
         loading={loading}
         error={error}
         ui={matchPageUi}
-        landmarksEnabled={state.landmarksEnabled}
+        landmarksEnabled={supportsLandmarks && state.landmarksEnabled}
         landmarkBanned={state.landmarkBanned}
         landmarksRandomCount={state.landmarksRandomCount}
         landmarksDrawn={state.landmarksDrawn ?? []}
@@ -180,7 +182,7 @@ export default function MatchPage({ gameKey }: Props) {
         {error && <div style={matchPageUi.errorBox}>Error: {error}</div>}
 
         {!state ? (
-          <div style={{ opacity: 0.78, color: 'rgba(255,255,255,0.72)' }}>{loading ? 'Loading…' : 'Match not found'}</div>
+          <div style={{ opacity: 0.78, color: 'rgba(255,255,255,0.72)' }}>{loading ? 'Loading...' : 'Match not found'}</div>
         ) : (
           <MatchPlayersSection
             playersInMatchOrder={playersInMatchOrder}
@@ -188,7 +190,7 @@ export default function MatchPage({ gameKey }: Props) {
             runningPlayerId={runningPlayerId}
             loading={loading}
             matchStarted={!!matchStarted}
-            landmarksEnabled={state.landmarksEnabled}
+            landmarksEnabled={supportsLandmarks && state.landmarksEnabled}
             landmarkBanned={state.landmarkBanned}
             landmarksDrawn={state.landmarksDrawn ?? []}
             scoreInput={scoreInput}

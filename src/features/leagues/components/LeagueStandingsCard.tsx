@@ -50,7 +50,7 @@ export default function LeagueStandingsCard({ standings, columns, ui }: Props) {
                   .join('')
 
                 const zebra = idx % 2 === 0
-                const baseBg = rank <= 3 ? 'rgba(220,38,38,0.08)' : zebra ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'
+                const baseBg = rank <= 3 ? 'rgba(var(--app-accent-rgb),0.08)' : zebra ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'
 
                 const values: Record<string, string | number> = {
                   rootsTotal: r.rootsTotal,
@@ -94,3 +94,4 @@ export default function LeagueStandingsCard({ standings, columns, ui }: Props) {
     </div>
   )
 }
+

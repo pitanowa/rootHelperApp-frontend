@@ -74,12 +74,12 @@ export default function LeagueHistoryCard({
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-1px)'
-                  e.currentTarget.style.borderColor = 'rgba(248,113,113,0.20)'
-                  e.currentTarget.style.boxShadow = '0 22px 60px rgba(0,0,0,0.36), 0 0 40px rgba(220,38,38,0.12)'
+                  e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.20)'
+                  e.currentTarget.style.boxShadow = '0 22px 60px rgba(0,0,0,0.36), 0 0 40px rgba(var(--app-accent-rgb),0.12)'
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)'
-                  e.currentTarget.style.borderColor = 'rgba(173,55,69,0.26)'
+                  e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.26)'
                   e.currentTarget.style.boxShadow = '0 16px 40px rgba(0,0,0,0.30)'
                 }}
               >
@@ -177,7 +177,7 @@ export default function LeagueHistoryCard({
                           gap: 6,
                           padding: 8,
                           borderRadius: 12,
-                          border: '1px solid rgba(209,110,122,0.3)',
+                          border: '1px solid rgba(var(--app-muted-rgb),0.3)',
                           background: 'linear-gradient(180deg, rgba(18,7,12,0.98), rgba(9,3,6,1))',
                           boxShadow: '0 22px 50px rgba(0,0,0,0.55)',
                         }}
@@ -227,3 +227,5 @@ export default function LeagueHistoryCard({
     </div>
   )
 }
+
+

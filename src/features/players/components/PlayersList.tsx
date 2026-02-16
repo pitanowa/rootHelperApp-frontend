@@ -25,12 +25,12 @@ export default function PlayersList({ players, loading, onRemovePlayer, ui }: Pr
             style={ui.playerCard}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.borderColor = 'rgba(220,38,38,0.18)'
-              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.38), 0 0 40px rgba(220,38,38,0.10)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.18)'
+              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.38), 0 0 40px rgba(var(--app-accent-rgb),0.10)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.32)'
               e.currentTarget.style.boxShadow = '0 18px 55px rgba(0,0,0,0.4)'
             }}
           >
@@ -40,7 +40,7 @@ export default function PlayersList({ players, loading, onRemovePlayer, ui }: Pr
               </div>
               <div>
                 <div style={ui.name}>{p.name}</div>
-                <div style={{ fontSize: 12, opacity: 0.78, color: 'rgba(233,200,205,0.78)' }}>Warrior registered</div>
+                <div style={{ fontSize: 12, opacity: 0.78, color: 'rgba(var(--app-muted-rgb),0.78)' }}>Warrior registered</div>
               </div>
             </div>
 
@@ -66,3 +66,5 @@ export default function PlayersList({ players, loading, onRemovePlayer, ui }: Pr
     </div>
   )
 }
+
+

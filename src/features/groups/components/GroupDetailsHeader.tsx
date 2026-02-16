@@ -46,8 +46,8 @@ export function GroupDetailsTopBar({ gameKey, ui }: TopBarProps) {
         style={ui.backLink}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-1px)'
-          e.currentTarget.style.borderColor = 'rgba(220,38,38,0.18)'
-          e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.35), 0 0 40px rgba(220,38,38,0.10)'
+          e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.18)'
+          e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.35), 0 0 40px rgba(var(--app-accent-rgb),0.10)'
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)'
@@ -60,3 +60,4 @@ export function GroupDetailsTopBar({ gameKey, ui }: TopBarProps) {
     </div>
   )
 }
+

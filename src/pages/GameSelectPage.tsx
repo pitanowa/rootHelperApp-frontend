@@ -1,17 +1,35 @@
 ﻿import { Link } from 'react-router-dom'
-import { GAME_MODULES } from '../core/games/registry'
+import { GAME_MODULES, resolveGameModule } from '../core/games/registry'
 import { gameHomePath } from '../routing/paths'
+import { useAppCtx } from '../useAppCtx'
 
 export default function GameSelectPage() {
+  const { supportedGames, supportedGamesLoading, supportedGamesError, refreshSupportedGames } = useAppCtx()
+
+  const items =
+    supportedGames.length > 0
+      ? supportedGames
+          .map((game) => {
+            const module = resolveGameModule(game.key)
+            if (!module) return null
+            return {
+              key: module.key,
+              title: game.displayName,
+              description: module.description,
+            }
+          })
+          .filter((item): item is { key: string; title: string; description: string } => item != null)
+      : GAME_MODULES.map((module) => ({ key: module.key, title: module.name, description: module.description }))
+
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: '28px 16px', color: 'rgba(255,255,255,0.92)' }}>
       <section
         style={{
           borderRadius: 20,
-          border: '1px solid rgba(196,63,75,0.34)',
+          border: 'var(--app-shell-border)',
           background:
-            'radial-gradient(900px 260px at 10% 0%, rgba(193,38,61,0.22), transparent 60%), linear-gradient(180deg, rgba(20,7,12,0.95), rgba(10,4,7,0.98))',
-          boxShadow: '0 16px 50px rgba(0,0,0,0.5), 0 0 32px rgba(137,19,40,0.18)',
+            'var(--app-shell-bg)',
+          boxShadow: 'var(--app-shell-shadow)',
           padding: 20,
         }}
       >
@@ -20,15 +38,26 @@ export default function GameSelectPage() {
           Select a game module. Core screens are shared, while league and match logic can be game-specific.
         </p>
 
+        {supportedGamesLoading ? <p style={{ marginTop: 0, opacity: 0.8 }}>Loading supported games...</p> : null}
+
+        {supportedGamesError ? (
+          <div style={{ marginBottom: 14, color: '#ffd5dc' }}>
+            <div style={{ marginBottom: 8 }}>Failed to load games from backend: {supportedGamesError}</div>
+            <button type="button" onClick={() => void refreshSupportedGames()}>
+              Retry
+            </button>
+          </div>
+        ) : null}
+
         <div style={{ display: 'grid', gap: 10 }}>
-          {GAME_MODULES.map((game) => (
+          {items.map((game) => (
             <Link
               key={game.key}
               to={gameHomePath(game.key)}
               style={{
                 borderRadius: 14,
-                border: '1px solid rgba(213,128,139,0.3)',
-                background: 'rgba(255,255,255,0.04)',
+                border: 'var(--app-input-border)',
+                background: 'var(--app-soft-bg)',
                 padding: '12px 14px',
                 textDecoration: 'none',
                 color: 'inherit',
@@ -36,7 +65,7 @@ export default function GameSelectPage() {
                 gap: 4,
               }}
             >
-              <strong style={{ fontSize: 18 }}>{game.name}</strong>
+              <strong style={{ fontSize: 18 }}>{game.title}</strong>
               <span style={{ fontSize: 13, opacity: 0.82 }}>{game.description}</span>
             </Link>
           ))}
@@ -45,3 +74,4 @@ export default function GameSelectPage() {
     </main>
   )
 }
+

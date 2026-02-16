@@ -32,12 +32,12 @@ export default function GroupsHeaderCard({
           disabled={loading}
           style={ui.input}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(255,95,116,0.5)'
-            e.currentTarget.style.boxShadow = '0 18px 44px rgba(137,19,40,0.28)'
+            e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.5)'
+            e.currentTarget.style.boxShadow = '0 18px 44px rgba(var(--app-accent-rgb),0.28)'
             e.currentTarget.style.transform = 'translateY(-1px)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(213,128,139,0.3)'
+            e.currentTarget.style.borderColor = 'rgba(var(--app-muted-rgb),0.3)'
             e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.25)'
             e.currentTarget.style.transform = 'translateY(0)'
           }}
@@ -85,3 +85,5 @@ export default function GroupsHeaderCard({
     </div>
   )
 }
+
+

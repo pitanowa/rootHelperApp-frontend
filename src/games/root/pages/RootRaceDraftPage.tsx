@@ -1,10 +1,10 @@
 ﻿import type { DraftState, MatchPlayerState } from '../../../features/matches/types'
-import { raceDraftUi as ui } from '../../../features/matches/raceDraftUi'
-import { useRaceDraftState } from '../../../features/matches/hooks/useRaceDraftState'
-import RaceDraftTopBar from '../../../features/matches/components/RaceDraftTopBar'
-import RaceDraftModals from '../../../features/matches/components/RaceDraftModals'
-import RaceDraftBanPhase from '../../../features/matches/components/RaceDraftBanPhase'
-import RaceDraftPickPhase from '../../../features/matches/components/RaceDraftPickPhase'
+import { raceDraftUi as ui } from '../match/raceDraftUi'
+import { useRaceDraftState } from '../match/hooks/useRaceDraftState'
+import RaceDraftTopBar from '../match/components/RaceDraftTopBar'
+import RaceDraftModals from '../match/components/RaceDraftModals'
+import RaceDraftBanPhase from '../match/components/RaceDraftBanPhase'
+import RaceDraftPickPhase from '../match/components/RaceDraftPickPhase'
 
 type Props = {
   matchId: number
@@ -160,4 +160,5 @@ export default function RaceDraftView({
     </div>
   )
 }
+
 

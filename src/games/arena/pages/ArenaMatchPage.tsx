@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { gameApiGet } from '../../../api'
+import type { GamePageProps } from '../../../core/games/types'
 
 type ArenaMatch = {
   matchId: number
@@ -9,7 +10,7 @@ type ArenaMatch = {
   gameKey?: string
 }
 
-export default function ArenaMatchPage({ gameKey }: { gameKey: string }) {
+export default function ArenaMatchPage({ gameKey }: GamePageProps) {
   const { matchId } = useParams()
   const mid = Number(matchId)
   const [match, setMatch] = useState<ArenaMatch | null>(null)
@@ -50,3 +51,4 @@ export default function ArenaMatchPage({ gameKey }: { gameKey: string }) {
     </main>
   )
 }
+

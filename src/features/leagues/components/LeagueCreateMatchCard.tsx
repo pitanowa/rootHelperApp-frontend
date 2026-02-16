@@ -61,12 +61,12 @@ export default function LeagueCreateMatchCard({
             disabled={loading}
             style={ui.input}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(220,38,38,0.35)'
-              e.currentTarget.style.boxShadow = '0 18px 40px rgba(220,38,38,0.18)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.35)'
+              e.currentTarget.style.boxShadow = '0 18px 40px rgba(var(--app-accent-rgb),0.18)'
               e.currentTarget.style.transform = 'translateY(-1px)'
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(209,110,122,0.3)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-muted-rgb),0.3)'
               e.currentTarget.style.background = 'rgba(255,255,255,0.04)'
               e.currentTarget.style.boxShadow = 'none'
               e.currentTarget.style.transform = 'translateY(0)'
@@ -163,3 +163,5 @@ export default function LeagueCreateMatchCard({
     </div>
   )
 }
+
+

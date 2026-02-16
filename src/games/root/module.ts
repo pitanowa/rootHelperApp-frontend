@@ -9,9 +9,14 @@ export const rootGameModule: GameModule = {
   name: 'Root',
   description: 'League and match management for Root.',
   themeTokens: rootThemeTokens,
+  defaultCapabilities: {
+    raceDraftSupported: true,
+    landmarksSupported: true,
+  },
   getLeaguePageConfig: getRootLeaguePageConfig,
   getStandingsColumns: getRootStandingsColumns,
   buildCreateMatchPayload: buildRootCreateMatchPayload,
   LeaguePage: RootLeaguePage,
   MatchPage: RootMatchPage,
 }
+

@@ -10,6 +10,18 @@ export type LeaguePageConfig = {
   supportsLandmarks: boolean
 }
 
+export type GameCapabilities = {
+  raceDraftSupported: boolean
+  landmarksSupported: boolean
+}
+
+export type SupportedGame = {
+  key: string
+  displayName: string
+  raceDraftSupported: boolean
+  landmarksSupported: boolean
+}
+
 export type CreateMatchFormState = {
   timerSeconds: number
   playerIds: number[]
@@ -22,10 +34,12 @@ export type CreateMatchFormState = {
 export type ThemeTokens = {
   backgroundImage: string
   accent: string
+  cssVars?: Record<string, string>
 }
 
 export type GamePageProps = {
   gameKey: string
+  capabilities: GameCapabilities
 }
 
 export type GameModule = {
@@ -34,7 +48,8 @@ export type GameModule = {
   name: string
   description: string
   themeTokens: ThemeTokens
-  getLeaguePageConfig: () => LeaguePageConfig
+  defaultCapabilities: GameCapabilities
+  getLeaguePageConfig: (capabilities: GameCapabilities) => LeaguePageConfig
   getStandingsColumns: () => StandingsColumn[]
   buildCreateMatchPayload: (formState: CreateMatchFormState) => Record<string, unknown>
   LeaguePage: ComponentType<GamePageProps>

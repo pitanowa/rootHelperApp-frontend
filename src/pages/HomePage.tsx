@@ -39,7 +39,7 @@ export default function HomePage({ gameKey }: Props) {
   )
 
   return (
-    <main className="home-page">
+    <main className={`home-page home-page--${gameKey.toLowerCase()}`}>
       <HomeHero gameKey={gameKey} playersCount={players.length} activeMatchesCount={activeMatches.length} onRefresh={load} />
 
       <section className="home-grid">

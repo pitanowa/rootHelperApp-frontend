@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { gameApiGet } from '../../../api'
+import type { GamePageProps } from '../../../core/games/types'
 
 type StandingRow = {
   playerId: number
@@ -23,7 +24,7 @@ type LeagueResponse = {
   gameKey?: string
 }
 
-export default function ArenaLeaguePage({ gameKey }: { gameKey: string }) {
+export default function ArenaLeaguePage({ gameKey }: GamePageProps) {
   const { leagueId } = useParams()
   const lid = Number(leagueId)
   const [league, setLeague] = useState<LeagueResponse | null>(null)
@@ -112,3 +113,4 @@ export default function ArenaLeaguePage({ gameKey }: { gameKey: string }) {
     </main>
   )
 }
+

@@ -1,4 +1,4 @@
-import type { LeaguePageUi } from '../leaguePageUi'
+﻿import type { LeaguePageUi } from '../leaguePageUi'
 
 type Props = {
   loading: boolean
@@ -12,7 +12,7 @@ export default function LeaguePageHeader({ loading, error, onRefresh, ui }: Prop
     <div style={ui.headerCard}>
       <h1 style={{ marginTop: 0, marginBottom: 8 }}>League</h1>
 
-      <div style={{ fontSize: 12, color: 'rgba(233,200,205,0.8)', marginBottom: 10 }}>
+      <div style={{ fontSize: 12, color: 'rgba(var(--app-muted-rgb),0.8)', marginBottom: 10 }}>
         Manage standings, create matches, and keep the war log tidy.
       </div>
 
@@ -34,3 +34,4 @@ export default function LeaguePageHeader({ loading, error, onRefresh, ui }: Prop
     </div>
   )
 }
+

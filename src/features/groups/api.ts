@@ -1,6 +1,8 @@
 ﻿import { gameApiDelete, gameApiGet, gameApiPost } from '../../api'
 import type { Group, GroupDetails, League, Player } from '../../types'
 
+const SHARED_PLAYERS_GAME_KEY = 'ROOT'
+
 export function listGroups(gameKey: string): Promise<Group[]> {
   return gameApiGet<Group[]>(gameKey, '/groups')
 }
@@ -29,6 +31,6 @@ export function removeGroupMember(gameKey: string, groupId: number, playerId: nu
   return gameApiDelete<void>(gameKey, `/groups/${groupId}/members/${playerId}`)
 }
 
-export function listPlayersForGroups(gameKey: string): Promise<Player[]> {
-  return gameApiGet<Player[]>(gameKey, '/players')
+export function listPlayersForGroups(_gameKey: string): Promise<Player[]> {
+  return gameApiGet<Player[]>(SHARED_PLAYERS_GAME_KEY, '/players')
 }

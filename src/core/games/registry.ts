@@ -1,8 +1,9 @@
 ﻿import type { GameModule } from './types'
 import { rootGameModule } from '../../games/root/module'
 import { arenaGameModule } from '../../games/arena/module'
+import { stationfallGameModule } from '../../games/stationfall/module'
 
-export const GAME_MODULES: GameModule[] = [rootGameModule, arenaGameModule]
+export const GAME_MODULES: GameModule[] = [rootGameModule, arenaGameModule, stationfallGameModule]
 
 const byKey = new Map(GAME_MODULES.map((module) => [module.key.toUpperCase(), module]))
 const bySlug = new Map(GAME_MODULES.map((module) => [module.slug.toLowerCase(), module]))

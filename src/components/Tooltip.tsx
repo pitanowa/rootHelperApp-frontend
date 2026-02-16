@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 type Placement = 'top' | 'bottom'
@@ -43,17 +43,17 @@ export default function Tooltip({
         // brutal frame
         border: '1px solid rgba(255,255,255,0.12)',
 
-        // “blood & ash” background with scars
+        // â€śblood & ashâ€ť background with scars
         background:
           'linear-gradient(180deg, rgba(12,10,12,0.98), rgba(8,8,10,0.98)),' +
-          'repeating-linear-gradient(135deg, rgba(220,38,38,0.14) 0px, rgba(220,38,38,0.14) 2px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 10px)',
+          'repeating-linear-gradient(135deg, rgba(var(--app-accent-rgb),0.14) 0px, rgba(var(--app-accent-rgb),0.14) 2px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 10px)',
 
         color: '#fff',
         boxShadow:
           '0 26px 80px rgba(0,0,0,0.75),' +
           '0 0 0 1px rgba(255,255,255,0.05) inset,' +
-          '0 0 90px rgba(220,38,38,0.18), ' +
-          '0 0 40px rgba(220,38,38,0.10)',
+          '0 0 90px rgba(var(--app-accent-rgb),0.18), ' +
+          '0 0 40px rgba(var(--app-accent-rgb),0.10)',
 
         fontSize: 13,
         fontWeight: 850,
@@ -85,23 +85,23 @@ export default function Tooltip({
             ? {
                 bottom: -10,
                 borderTop: '10px solid rgba(12,10,12,0.98)',
-                filter: 'drop-shadow(0 -8px 16px rgba(220,38,38,0.18))',
+                filter: 'drop-shadow(0 -8px 16px rgba(var(--app-accent-rgb),0.18))',
               }
             : {
                 top: -10,
                 borderBottom: '10px solid rgba(12,10,12,0.98)',
-                filter: 'drop-shadow(0 8px 16px rgba(220,38,38,0.18))',
+                filter: 'drop-shadow(0 8px 16px rgba(var(--app-accent-rgb),0.18))',
               }),
         }) as const,
 
-      // red “rim glow” overlay
+      // red â€śrim glowâ€ť overlay
       rim: {
         position: 'absolute' as const,
         inset: 0,
         borderRadius: 14,
         pointerEvents: 'none' as const,
         boxShadow:
-          '0 0 0 1px rgba(220,38,38,0.22) inset, 0 0 34px rgba(220,38,38,0.10) inset',
+          '0 0 0 1px rgba(var(--app-accent-rgb),0.22) inset, 0 0 34px rgba(var(--app-accent-rgb),0.10) inset',
         maskImage:
           'radial-gradient(120% 90% at 20% 0%, black 0%, black 60%, transparent 100%)',
       } as const,
@@ -191,3 +191,4 @@ export default function Tooltip({
     </>
   )
 }
+

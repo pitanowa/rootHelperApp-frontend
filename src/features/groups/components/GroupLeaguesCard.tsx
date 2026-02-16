@@ -42,7 +42,7 @@ export default function GroupLeaguesCard({
             e.currentTarget.style.transform = 'translateY(-1px)'
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(213,128,139,0.3)'
+            e.currentTarget.style.borderColor = 'rgba(var(--app-muted-rgb),0.3)'
             e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.25)'
             e.currentTarget.style.transform = 'translateY(0)'
           }}
@@ -75,12 +75,12 @@ export default function GroupLeaguesCard({
             style={ui.leagueLink}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.borderColor = 'rgba(255,95,116,0.52)'
-              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.42), 0 0 40px rgba(137,19,40,0.18)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.52)'
+              e.currentTarget.style.boxShadow = '0 22px 70px rgba(0,0,0,0.42), 0 0 40px rgba(var(--app-accent-rgb),0.18)'
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.borderColor = 'rgba(196,63,75,0.32)'
+              e.currentTarget.style.borderColor = 'rgba(var(--app-accent-rgb),0.32)'
               e.currentTarget.style.boxShadow = '0 14px 38px rgba(0,0,0,0.42)'
             }}
           >
@@ -97,3 +97,5 @@ export default function GroupLeaguesCard({
     </section>
   )
 }
+
+
