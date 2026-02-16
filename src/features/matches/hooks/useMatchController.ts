@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { apiGet, apiPost } from '../../../api'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { gameApiGet, gameApiPost } from '../../../api'
 import type { DraftState, MatchState } from '../types'
 
 export type MatchSummary = {
@@ -29,12 +29,14 @@ export type MatchSummary = {
 }
 
 type Params = {
+  gameKey: string
   mid: number
   getRaceMap: (mid: number) => Record<number, string>
   playAlarm: () => void
+  onGoToLeague: (leagueId: number) => void
 }
 
-export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
+export function useMatchController({ gameKey, mid, getRaceMap, playAlarm, onGoToLeague }: Params) {
   const [state, setState] = useState<MatchState | null>(null)
   const [draft, setDraft] = useState<DraftState | null>(null)
 
@@ -65,7 +67,7 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
     setError(null)
 
     try {
-      const s = await apiGet<MatchState>(`/api/matches/${mid}`)
+      const s = await gameApiGet<MatchState>(gameKey, `/matches/${mid}`)
 
       const raceMap = getRaceMap(mid)
       let nextState: MatchState = {
@@ -94,7 +96,7 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
 
       if (s.raceDraftEnabled) {
         try {
-          const d = await apiGet<DraftState>(`/api/matches/${mid}/draft`)
+          const d = await gameApiGet<DraftState>(gameKey, `/matches/${mid}/draft`)
           setDraft(d)
 
           const raceByPlayerId = new Map(d.assignments.map((a) => [a.playerId, a.race]))
@@ -119,7 +121,7 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
       setLoading(false)
       loadInFlightRef.current = false
     }
-  }, [getRaceMap, mid])
+  }, [gameKey, getRaceMap, mid])
 
   useEffect(() => {
     void load()
@@ -157,14 +159,14 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
     setLoading(true)
     setError(null)
     try {
-      await apiPost<void>(`/api/matches/${mid}/start`)
+      await gameApiPost<void>(gameKey, `/matches/${mid}/start`)
       await load()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to start match')
     } finally {
       setLoading(false)
     }
-  }, [load, mid])
+  }, [gameKey, load, mid])
 
   const saveTime = useCallback(
     async (playerId: number, timeLeftSeconds: number) => {
@@ -173,11 +175,11 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
       if (now - last < 500) return
       lastSaveRef.current[playerId] = now
 
-      await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, {
+      await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/set-time`, {
         timeLeftSeconds: Math.max(0, Math.floor(timeLeftSeconds)),
       })
     },
-    [mid],
+    [gameKey, mid],
   )
 
   const setRunning = useCallback(
@@ -219,60 +221,60 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
     async (playerId: number) => {
       setLocalTime((prev) => ({ ...prev, [playerId]: (prev[playerId] ?? 0) + 60 }))
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: 60 })
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/time`, { seconds: 60 })
       } catch {
         // keep optimistic local time, backend will resync on next load
       }
     },
-    [mid],
+    [gameKey, mid],
   )
 
   const removeMinute = useCallback(
     async (playerId: number) => {
       setLocalTime((prev) => ({ ...prev, [playerId]: Math.max(0, (prev[playerId] ?? 0) - 60) }))
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: -60 })
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/time`, { seconds: -60 })
       } catch {
         // keep optimistic local time, backend will resync on next load
       }
     },
-    [mid],
+    [gameKey, mid],
   )
 
   const addSecond = useCallback(
     async (playerId: number) => {
       setLocalTime((prev) => ({ ...prev, [playerId]: (prev[playerId] ?? 0) + 1 }))
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: 1 })
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/time`, { seconds: 1 })
       } catch {
         // keep optimistic local time, backend will resync on next load
       }
     },
-    [mid],
+    [gameKey, mid],
   )
 
   const removeSecond = useCallback(
     async (playerId: number) => {
       setLocalTime((prev) => ({ ...prev, [playerId]: Math.max(0, (prev[playerId] ?? 0) - 1) }))
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/time`, { seconds: -1 })
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/time`, { seconds: -1 })
       } catch {
         // keep optimistic local time, backend will resync on next load
       }
     },
-    [mid],
+    [gameKey, mid],
   )
 
   const scoreDelta = useCallback(
     async (playerId: number, delta: number) => {
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/score`, { delta })
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/score`, { delta })
         await load()
       } catch {
         // let user continue; next refresh will reconcile
       }
     },
-    [load, mid],
+    [gameKey, load, mid],
   )
 
   const setScoreAbsolute = useCallback(
@@ -292,7 +294,7 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
       setLocalTime((prev) => ({ ...prev, [playerId]: presetSeconds }))
 
       try {
-        await apiPost<void>(`/api/matches/${mid}/players/${playerId}/set-time`, {
+        await gameApiPost<void>(gameKey, `/matches/${mid}/players/${playerId}/set-time`, {
           timeLeftSeconds: presetSeconds,
         })
         await load()
@@ -300,28 +302,28 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
         setError(e instanceof Error ? e.message : 'Failed to refresh timer')
       }
     },
-    [load, mid, presetSeconds],
+    [gameKey, load, mid, presetSeconds],
   )
 
   const openSummaryModal = useCallback(async () => {
-    const s = await apiGet<MatchSummary>(`/api/matches/${mid}/summary`)
+    const s = await gameApiGet<MatchSummary>(gameKey, `/matches/${mid}/summary`)
     setSummary(s)
     setSummaryDesc((s.description ?? '').toString())
     setSummaryOpen(true)
-  }, [mid])
+  }, [gameKey, mid])
 
   const saveSummaryAndExit = useCallback(async () => {
     if (!summary) return
     setSummarySaving(true)
     try {
-      await apiPost<void>(`/api/matches/${mid}/description`, { description: summaryDesc })
-      window.location.href = `/leagues/${summary.leagueId}`
+      await gameApiPost<void>(gameKey, `/matches/${mid}/description`, { description: summaryDesc })
+      onGoToLeague(summary.leagueId)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to save description')
     } finally {
       setSummarySaving(false)
     }
-  }, [mid, summary, summaryDesc])
+  }, [gameKey, mid, onGoToLeague, summary, summaryDesc])
 
   const finish = useCallback(async () => {
     const ok = confirm('Finish match? This will update league standings.')
@@ -340,13 +342,13 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
           }
         }
       }
-      await apiPost<void>(`/api/matches/${mid}/finish`)
+      await gameApiPost<void>(gameKey, `/matches/${mid}/finish`)
       await load()
       await openSummaryModal()
     } finally {
       setLoading(false)
     }
-  }, [load, localTime, mid, openSummaryModal, runningPlayerId, saveTime])
+  }, [gameKey, load, localTime, mid, openSummaryModal, runningPlayerId, saveTime])
 
   return {
     state,
@@ -381,4 +383,3 @@ export function useMatchController({ mid, getRaceMap, playAlarm }: Params) {
     saveSummaryAndExit,
   }
 }
-

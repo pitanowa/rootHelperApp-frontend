@@ -1,23 +1,27 @@
-# Root League Frontend
+﻿# Root League Frontend
 
-Frontend application for managing Root league matches.
-The app is built with React + TypeScript and communicates with a backend via REST API.
+Frontend for league and match management with a `core + game modules` architecture.
+The current implemented game module is `root`, but routing and API access are now game-aware.
+
+## Architecture Overview
+
+The app is split into two layers:
+
+- `core`: shared shell and domain areas (`Home`, `Players`, `Groups`, navigation, routing, API wrappers)
+- `game module`: game-specific league and match behavior, data model details, and styling
+
+Current game registry is defined in `src/games/registry.ts`.
 
 ## Features
 
-- Home page with:
-  - active matches list
-  - players overview
-  - league standings preview
-- Player management
-- Group and group members management
-- League management within groups
-- Match creation (ranked/casual, timer, race draft options, landmarks)
-- Match view:
-  - per-player timer
-  - score updates and match state handling
-  - race draft flow
-  - post-match summary
+- Game selection screen (`/`)
+- Per-game workspace under `g/:gameKey/...`
+- Shared pages:
+  - Home dashboard
+  - Players
+  - Groups
+- Game-aware league and match flows
+- Match timers, scoring, draft/race flow, and summary (for `root`)
 
 ## Tech Stack
 
@@ -53,13 +57,27 @@ npm run dev
 http://localhost:5173
 ```
 
+## Routing
+
+Main routes in `src/App.tsx`:
+
+- `/` - game selection page
+- `/g/:gameKey` - game home
+- `/g/:gameKey/players`
+- `/g/:gameKey/groups`
+- `/g/:gameKey/groups/:groupId`
+- `/g/:gameKey/leagues/:leagueId`
+- `/g/:gameKey/matches/:matchId`
+
+Helper functions for route generation are in `src/routing/paths.ts`.
+
 ## API Configuration
 
-The frontend uses shared HTTP helpers in `src/api.ts`.
+Shared API utilities are in `src/api.ts`.
 
-- In development, Vite proxy is configured by default:
+- Development proxy (default):
   - `/api` -> `http://localhost:8080`
-  - configuration is in `vite.config.ts`
+  - configured in `vite.config.ts`
 - For other environments, set `VITE_API_BASE_URL`
 
 Example (`.env.local`):
@@ -68,10 +86,20 @@ Example (`.env.local`):
 VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Notes:
+### Game-aware API paths
 
-- If `VITE_API_BASE_URL` is not set, the frontend uses relative paths (for example `/api/groups`).
-- In production, set a full backend base URL.
+Use `gameApiGet`, `gameApiPost`, `gameApiDelete` from `src/api.ts`.
+
+Behavior:
+
+- For `root` (default): calls `/api/...` for backward compatibility
+- For other games: calls `/api/games/:gameKey/...`
+
+If you want `root` to also use scoped paths, set:
+
+```env
+VITE_USE_SCOPED_ROOT_API=1
+```
 
 ## Scripts
 
@@ -80,37 +108,27 @@ Notes:
 - `npm run preview` - local preview of production build
 - `npm run lint` - run lint checks
 
-## Routing
-
-Main routes in `src/App.tsx`:
-
-- `/` - Home
-- `/players` - Players
-- `/groups` - Groups
-- `/groups/:groupId` - Group details
-- `/leagues/:leagueId` - League
-- `/matches/:matchId` - Match
-
 ## Project Structure
 
 ```text
 src/
+  games/               # game registry and game definitions
+  routing/             # route/path helpers
+  pages/               # route-level pages
+  features/            # domain features (home, groups, leagues, matches, players)
   components/          # shared UI components and modals
-  features/            # domain modules (home, groups, leagues, matches, players)
-  pages/               # route-level page components
-  data/                # static data (for example cards)
-  constants/           # app constants
-  api.ts               # shared HTTP layer
-  App.tsx              # routing + top navigation
+  api.ts               # shared HTTP and game-aware API helpers
+  App.tsx              # app shell and game-aware routing
 ```
 
 ## Common Issues
 
 - `Failed to fetch` / missing data:
-  - check if backend is running
-  - verify `VITE_API_BASE_URL` or Vite proxy in `vite.config.ts`
-- CORS errors:
-  - configure CORS on backend or use Vite proxy in development
+  - verify backend is running
+  - verify `VITE_API_BASE_URL` and proxy config
+- Wrong API namespace for new game modules:
+  - check if requests use `gameApi*` helpers
+  - check backend support for `/api/games/:gameKey/...`
 - Frontend does not reflect changes:
   - restart `npm run dev`
   - hard refresh browser

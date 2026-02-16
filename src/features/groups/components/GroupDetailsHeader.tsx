@@ -1,5 +1,6 @@
 ﻿import { Link } from 'react-router-dom'
 import type { GroupDetails } from '../../../types'
+import { gameGroupsPath } from '../../../routing/paths'
 import type { GroupDetailsPageUi } from '../groupDetailsPageUi'
 
 type Props = {
@@ -28,10 +29,11 @@ export default function GroupDetailsHeader({ group, membersCount, leaguesCount, 
 }
 
 type TopBarProps = {
+  gameKey: string
   ui: GroupDetailsPageUi
 }
 
-export function GroupDetailsTopBar({ ui }: TopBarProps) {
+export function GroupDetailsTopBar({ gameKey, ui }: TopBarProps) {
   return (
     <div style={ui.topBar}>
       <div>
@@ -40,7 +42,7 @@ export function GroupDetailsTopBar({ ui }: TopBarProps) {
       </div>
 
       <Link
-        to="/groups"
+        to={gameGroupsPath(gameKey)}
         style={ui.backLink}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-1px)'

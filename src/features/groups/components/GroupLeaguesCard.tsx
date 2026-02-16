@@ -1,8 +1,10 @@
 ﻿import { Link } from 'react-router-dom'
 import type { League } from '../../../types'
+import { gameLeaguePath } from '../../../routing/paths'
 import type { GroupDetailsPageUi } from '../groupDetailsPageUi'
 
 type Props = {
+  gameKey: string
   loading: boolean
   newLeagueName: string
   setNewLeagueName: (value: string) => void
@@ -12,6 +14,7 @@ type Props = {
 }
 
 export default function GroupLeaguesCard({
+  gameKey,
   loading,
   newLeagueName,
   setNewLeagueName,
@@ -68,7 +71,7 @@ export default function GroupLeaguesCard({
         {sortedLeagues.map((l) => (
           <Link
             key={l.id}
-            to={`/leagues/${l.id}`}
+            to={gameLeaguePath(gameKey, l.id)}
             style={ui.leagueLink}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'

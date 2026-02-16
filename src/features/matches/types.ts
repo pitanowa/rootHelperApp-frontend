@@ -1,5 +1,6 @@
-export type ActiveMatch = {
+﻿export type ActiveMatch = {
   id: number
+  gameKey?: string
   status: string
   leagueId?: number
   groupId?: number
@@ -33,6 +34,7 @@ export type DraftState = {
 
 export type MatchState = {
   matchId: number
+  gameKey?: string
   leagueId: number
   groupId: number
   status: string

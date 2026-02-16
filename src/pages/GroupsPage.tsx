@@ -3,7 +3,11 @@ import GroupsList from '../features/groups/components/GroupsList'
 import { useGroupsPageController } from '../features/groups/hooks/useGroupsPageController'
 import { groupsPageUi } from '../features/groups/groupsPageUi'
 
-export default function GroupsPage() {
+type Props = {
+  gameKey: string
+}
+
+export default function GroupsPage({ gameKey }: Props) {
   const {
     sortedGroups,
     name,
@@ -12,7 +16,7 @@ export default function GroupsPage() {
     setName,
     loadGroups,
     createGroup,
-  } = useGroupsPageController()
+  } = useGroupsPageController(gameKey)
 
   return (
     <div style={groupsPageUi.page}>
@@ -27,7 +31,7 @@ export default function GroupsPage() {
           ui={groupsPageUi}
         />
 
-        <GroupsList groups={sortedGroups} ui={groupsPageUi} />
+        <GroupsList groups={sortedGroups} gameKey={gameKey} ui={groupsPageUi} />
       </div>
     </div>
   )

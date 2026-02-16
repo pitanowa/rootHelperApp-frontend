@@ -9,6 +9,7 @@
 
 export type CreatedMatch = {
   id: number
+  gameKey?: string
   leagueId: number
   groupId: number
   status: string
@@ -17,6 +18,7 @@ export type CreatedMatch = {
 
 export type MatchListItem = {
   id: number
+  gameKey?: string
   status: string
   timerSecondsInitial: number
   ranked: boolean
@@ -25,6 +27,7 @@ export type MatchListItem = {
 
 export type MatchSummary = {
   matchId: number
+  gameKey?: string
   leagueId: number
   matchName: string | null
   ranked: boolean

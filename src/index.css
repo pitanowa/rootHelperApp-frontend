@@ -1,9 +1,14 @@
-/* Globalny wygląd "paneli" */
+﻿:root {
+  --app-bg-image: linear-gradient(180deg, #0f172a, #111827);
+  --app-accent: #c1263d;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -15,31 +20,24 @@ body {
   background-color: #ffffff;
 }
 
-/* Globalne tło w całej aplikacji */
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
-
-  background-image: url("/src/assets/root.png");
-  /* background-image: url("/src/assets/root_board.jpg"); */
-  background-repeat: no-repeat;   /* było repeat */
-  background-size: cover;         /* wypełnia cały ekran */
-  background-position: center;    /* wyśrodkuj */
-  background-attachment: fixed;   /* opcjonalnie: "nieruchome" przy scrollu */
-
-  opacity: 0.90;
+  background-image: var(--app-bg-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 0.9;
   pointer-events: none;
   z-index: -1;
 }
 
-
-/* a całą aplikację daj nad tłem */
 #root {
   position: relative;
   z-index: 1;
 }
-
 
 h1 {
   font-size: 3.2em;
@@ -57,9 +55,11 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -70,9 +70,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }

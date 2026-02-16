@@ -1,4 +1,4 @@
-export type Player = {
+﻿export type Player = {
   id: number
   name: string
   createdAt: string
@@ -17,6 +17,7 @@ export type GroupDetails = {
 
 export type League = {
   id: number
+  gameKey?: string
   groupId: number
   name: string
 }

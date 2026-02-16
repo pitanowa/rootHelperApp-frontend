@@ -1,15 +1,14 @@
-import { apiDelete, apiGet, apiPost } from '../../api'
+﻿import { gameApiDelete, gameApiGet, gameApiPost } from '../../api'
 import type { Player } from '../../types'
 
-export function listPlayers(): Promise<Player[]> {
-  return apiGet<Player[]>('/api/players')
+export function listPlayers(gameKey: string): Promise<Player[]> {
+  return gameApiGet<Player[]>(gameKey, '/players')
 }
 
-export function createPlayer(name: string): Promise<Player> {
-  return apiPost<Player>('/api/players', { name })
+export function createPlayer(gameKey: string, name: string): Promise<Player> {
+  return gameApiPost<Player>(gameKey, '/players', { name })
 }
 
-export function deletePlayer(playerId: number): Promise<void> {
-  return apiDelete<void>(`/api/players/${playerId}`)
+export function deletePlayer(gameKey: string, playerId: number): Promise<void> {
+  return gameApiDelete<void>(gameKey, `/players/${playerId}`)
 }
-

@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import type { ActiveMatch } from '../../matches/types'
+import { gameMatchPath } from '../../../routing/paths'
 import { getGroupLabel, getLeagueLabel } from '../homePageUi'
 
 type HomeMatchesCardProps = {
+  gameKey: string
   activeMatches: ActiveMatch[]
   loading: boolean
   error: string | null
@@ -12,6 +14,7 @@ type HomeMatchesCardProps = {
 }
 
 export default function HomeMatchesCard({
+  gameKey,
   activeMatches,
   loading,
   error,
@@ -22,20 +25,20 @@ export default function HomeMatchesCard({
   return (
     <section className="home-card home-fade-up home-fade-up--delay-3">
       <header className="home-card__header">
-        <h2>Aktywne mecze</h2>
+        <h2>Active matches</h2>
         <span className="home-live">LIVE</span>
       </header>
 
       <div className="home-card__body home-scroll home-scroll--gap">
-        {loading && <div className="home-state">Ładowanie...</div>}
+        {loading && <div className="home-state">Loading...</div>}
         {!loading && error && <div className="home-state home-state--error">{error}</div>}
-        {!loading && !error && activeMatches.length === 0 && <div className="home-state">Brak aktywnych meczów.</div>}
+        {!loading && !error && activeMatches.length === 0 && <div className="home-state">No active matches.</div>}
         {!loading && !error && activeMatches.length > 0 && (
           <>
             {activeMatches.map((match) => (
               <Link
                 key={match.id}
-                to={`/matches/${match.id}`}
+                to={gameMatchPath(gameKey, match.id)}
                 className="home-match"
                 onClick={() => onOpenMatch(match)}
               >
@@ -57,7 +60,7 @@ export default function HomeMatchesCard({
         )}
       </div>
 
-      <footer className="home-card__footer">Kliknij mecz, aby wrócić do rozgrywki.</footer>
+      <footer className="home-card__footer">Open a match to continue gameplay.</footer>
     </section>
   )
 }

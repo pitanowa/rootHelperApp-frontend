@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { listGroups } from '../../groups/api'
 import { listLeagues, listLeagueStandings, type StandingRow } from '../../leagues/api'
@@ -9,7 +9,7 @@ import { toErrorMessage } from '../../../shared/errors'
 
 type PlayerListItem = { id: number; name: string }
 
-export function useHomePageController() {
+export function useHomePageController(gameKey: string) {
   const [players, setPlayers] = useState<PlayerListItem[]>([])
   const [loadingPlayers, setLoadingPlayers] = useState(true)
   const [playersError, setPlayersError] = useState<string | null>(null)
@@ -41,10 +41,10 @@ export function useHomePageController() {
 
     try {
       const [matches, leagues, groups, playersResp] = await Promise.all([
-        listActiveMatches(),
-        listLeagues(),
-        listGroups(),
-        listPlayers(),
+        listActiveMatches(gameKey),
+        listLeagues(gameKey),
+        listGroups(gameKey),
+        listPlayers(gameKey),
       ])
 
       if (requestId !== requestIdRef.current) return
@@ -61,20 +61,20 @@ export function useHomePageController() {
         setStandings([])
       } else {
         try {
-          const standingsRows = await listLeagueStandings(initialLeagueId)
+          const standingsRows = await listLeagueStandings(gameKey, initialLeagueId)
           if (requestId !== requestIdRef.current) return
           setStandings(standingsRows ?? [])
         } catch (error: unknown) {
           if (requestId !== requestIdRef.current) return
-          setStandingsError(toErrorMessage(error, 'Nie udalo sie pobrac tabeli ligi.'))
+          setStandingsError(toErrorMessage(error, 'Failed to fetch league standings.'))
           setStandings([])
         }
       }
     } catch (error: unknown) {
       if (requestId !== requestIdRef.current) return
-      setActiveError(toErrorMessage(error, 'Nie udalo sie pobrac aktywnych meczow.'))
-      setPlayersError(toErrorMessage(error, 'Nie udalo sie pobrac listy graczy.'))
-      setStandingsError(toErrorMessage(error, 'Nie udalo sie pobrac tabeli ligi.'))
+      setActiveError(toErrorMessage(error, 'Failed to fetch active matches.'))
+      setPlayersError(toErrorMessage(error, 'Failed to fetch players list.'))
+      setStandingsError(toErrorMessage(error, 'Failed to fetch league standings.'))
       setActiveMatches([])
       setPlayers([])
       setStandings([])
@@ -85,7 +85,7 @@ export function useHomePageController() {
         setLoadingStandings(false)
       }
     }
-  }, [])
+  }, [gameKey])
 
   useEffect(() => {
     void load()

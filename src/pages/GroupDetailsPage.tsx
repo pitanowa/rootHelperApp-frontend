@@ -6,7 +6,11 @@ import GroupMembersCard from '../features/groups/components/GroupMembersCard'
 import { useGroupDetailsController } from '../features/groups/hooks/useGroupDetailsController'
 import { groupDetailsPageUi } from '../features/groups/groupDetailsPageUi'
 
-export default function GroupDetailsPage() {
+type Props = {
+  gameKey: string
+}
+
+export default function GroupDetailsPage({ gameKey }: Props) {
   const { groupId } = useParams()
   const { setSelectedGroupId } = useAppCtx()
 
@@ -28,13 +32,14 @@ export default function GroupDetailsPage() {
     removeMember,
     createLeague,
   } = useGroupDetailsController({
+    gameKey,
     groupId: gid,
     onSelectedGroupIdChange: setSelectedGroupId,
   })
 
   return (
     <div style={groupDetailsPageUi.page}>
-      <GroupDetailsTopBar ui={groupDetailsPageUi} />
+      <GroupDetailsTopBar gameKey={gameKey} ui={groupDetailsPageUi} />
 
       {error && (
         <div style={groupDetailsPageUi.err}>
@@ -71,6 +76,7 @@ export default function GroupDetailsPage() {
             />
 
             <GroupLeaguesCard
+              gameKey={gameKey}
               loading={loading}
               newLeagueName={newLeagueName}
               setNewLeagueName={setNewLeagueName}

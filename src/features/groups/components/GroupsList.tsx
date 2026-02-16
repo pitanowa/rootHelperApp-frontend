@@ -1,20 +1,22 @@
 ﻿import { Link } from 'react-router-dom'
 import type { Group } from '../../../types'
+import { gameGroupDetailsPath } from '../../../routing/paths'
 import type { GroupsPageUi } from '../groupsPageUi'
 
 type Props = {
+  gameKey: string
   groups: Group[]
   ui: GroupsPageUi
 }
 
-export default function GroupsList({ groups, ui }: Props) {
+export default function GroupsList({ gameKey, groups, ui }: Props) {
   return (
     <div style={{ marginTop: 12 }}>
       <div style={ui.list}>
         {groups.map((g) => (
           <Link
             key={g.id}
-            to={`/groups/${g.id}`}
+            to={gameGroupDetailsPath(gameKey, g.id)}
             style={ui.groupLink}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)'

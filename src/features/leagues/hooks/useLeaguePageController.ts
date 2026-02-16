@@ -1,15 +1,25 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiDelete, apiGet, apiPost } from '../../../api'
+import { gameApiDelete, gameApiGet, gameApiPost } from '../../../api'
+import type { CreateMatchFormState, LeaguePageConfig } from '../../../core/games/types'
 import type { Player } from '../../../types'
 import { toErrorMessage } from '../../../shared/errors'
 import type { CreatedMatch, MatchListItem, MatchSummary, StandingRow } from '../types'
 
 type Params = {
+  gameKey: string
   leagueId: number
+  getLeaguePageConfig: () => LeaguePageConfig
+  buildCreateMatchPayload: (formState: CreateMatchFormState) => Record<string, unknown>
   onMatchCreated: (matchId: number) => void
 }
 
-export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
+export function useLeaguePageController({
+  gameKey,
+  leagueId,
+  getLeaguePageConfig,
+  buildCreateMatchPayload,
+  onMatchCreated,
+}: Params) {
   const [standings, setStandings] = useState<StandingRow[]>([])
   const [matches, setMatches] = useState<MatchListItem[]>([])
   const [selected, setSelected] = useState<number[]>([])
@@ -24,10 +34,17 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
   const [summary, setSummary] = useState<MatchSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
 
+  const leagueConfig = getLeaguePageConfig()
+
   const players: Player[] = useMemo(
     () => standings.map((s) => ({ id: s.playerId, name: s.playerName, createdAt: '' })),
     [standings],
   )
+
+  useEffect(() => {
+    if (!leagueConfig.supportsRaceDraft && raceDraftEnabled) setRaceDraftEnabled(false)
+    if (!leagueConfig.supportsLandmarks && landmarksEnabled) setLandmarksEnabled(false)
+  }, [landmarksEnabled, leagueConfig.supportsLandmarks, leagueConfig.supportsRaceDraft, raceDraftEnabled])
 
   useEffect(() => {
     if (!raceDraftEnabled) setExcludedRaces([])
@@ -38,8 +55,8 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     setError(null)
     try {
       const [rows, ms] = await Promise.all([
-        apiGet<StandingRow[]>(`/api/leagues/${leagueId}/standings`),
-        apiGet<MatchListItem[]>(`/api/leagues/${leagueId}/matches`),
+        gameApiGet<StandingRow[]>(gameKey, `/leagues/${leagueId}/standings`),
+        gameApiGet<MatchListItem[]>(gameKey, `/leagues/${leagueId}/matches`),
       ])
 
       rows.sort((a, b) => (b.rootsTotal ?? 0) - (a.rootsTotal ?? 0) || a.playerName.localeCompare(b.playerName))
@@ -53,7 +70,7 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     } finally {
       setLoading(false)
     }
-  }, [leagueId])
+  }, [gameKey, leagueId])
 
   const openMatchSummary = useCallback(async (matchId: number) => {
     setSummary(null)
@@ -61,7 +78,7 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     setSummaryLoading(true)
     setError(null)
     try {
-      const s = await apiGet<MatchSummary>(`/api/matches/${matchId}/summary`)
+      const s = await gameApiGet<MatchSummary>(gameKey, `/matches/${matchId}/summary`)
       setSummary(s)
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to load match summary'))
@@ -69,46 +86,46 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     } finally {
       setSummaryLoading(false)
     }
-  }, [])
+  }, [gameKey])
 
   const deleteMatch = useCallback(async (matchId: number) => {
     setLoading(true)
     setError(null)
     try {
-      await apiDelete<void>(`/api/matches/${matchId}`)
+      await gameApiDelete<void>(gameKey, `/matches/${matchId}`)
       await load()
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to delete match'))
     } finally {
       setLoading(false)
     }
-  }, [load])
+  }, [gameKey, load])
 
   const updateMatchRanked = useCallback(async (matchId: number, rankedNext: boolean) => {
     setLoading(true)
     setError(null)
     try {
-      await apiPost<void>(`/api/matches/${matchId}/ranked`, { ranked: rankedNext })
+      await gameApiPost<void>(gameKey, `/matches/${matchId}/ranked`, { ranked: rankedNext })
       await load()
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to update match ranked flag'))
     } finally {
       setLoading(false)
     }
-  }, [load])
+  }, [gameKey, load])
 
   const saveMatchName = useCallback(async (matchId: number, name: string) => {
     setLoading(true)
     setError(null)
     try {
-      await apiPost<void>(`/api/matches/${matchId}/name`, { name })
+      await gameApiPost<void>(gameKey, `/matches/${matchId}/name`, { name })
       await load()
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to set match name'))
     } finally {
       setLoading(false)
     }
-  }, [load])
+  }, [gameKey, load])
 
   useEffect(() => {
     if (!Number.isFinite(leagueId)) return
@@ -128,21 +145,23 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     setLoading(true)
     setError(null)
     try {
-      const match = await apiPost<CreatedMatch>(`/api/leagues/${leagueId}/matches`, {
+      const payload = buildCreateMatchPayload({
         timerSeconds,
         playerIds: selected,
         ranked,
         raceDraftEnabled,
-        excludedRaces: raceDraftEnabled ? excludedRaces : [],
+        excludedRaces,
         landmarksEnabled,
       })
+
+      const match = await gameApiPost<CreatedMatch>(gameKey, `/leagues/${leagueId}/matches`, payload)
       onMatchCreated(match.id)
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to create match'))
     } finally {
       setLoading(false)
     }
-  }, [excludedRaces, landmarksEnabled, leagueId, onMatchCreated, raceDraftEnabled, ranked, selected, timerSeconds])
+  }, [buildCreateMatchPayload, excludedRaces, gameKey, landmarksEnabled, leagueId, onMatchCreated, raceDraftEnabled, ranked, selected, timerSeconds])
 
   return {
     standings,
@@ -153,6 +172,7 @@ export function useLeaguePageController({ leagueId, onMatchCreated }: Params) {
     timerSeconds,
     loading,
     error,
+    leagueConfig,
     landmarksEnabled,
     raceDraftEnabled,
     summaryOpen,

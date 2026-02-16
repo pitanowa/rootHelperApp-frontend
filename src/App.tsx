@@ -1,20 +1,25 @@
-import type { CSSProperties } from 'react'
+﻿import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useState } from 'react'
-import { Link, NavLink, Route, Routes } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
-import PlayersPage from './pages/PlayersPage'
-import GroupsPage from './pages/GroupsPage'
-import GroupDetailsPage from './pages/GroupDetailsPage'
-import LeaguePage from './pages/LeaguePage'
-import MatchPage from './pages/MatchPage'
-import HomePage from './pages/HomePage'
+import PlayersPage from './core/pages/PlayersPage'
+import GroupsPage from './core/pages/GroupsPage'
+import GroupDetailsPage from './core/pages/GroupDetailsPage'
+import HomePage from './core/pages/HomePage'
+import GameSelectPage from './core/pages/GameSelectPage'
 
 import { createGroupLeague, listGroupLeagues, listGroups } from './features/groups/api'
+import { DEFAULT_GAME_KEY, GAME_MODULES, resolveGameModule } from './core/games/registry'
+import { applyGameTheme } from './core/theme/applyGameTheme'
+import { gameGroupsPath, gameHomePath, gameLeaguePath, gamePlayersPath } from './routing/paths'
 import type { Group, League } from './types'
+import type { GameModule } from './core/games/types'
 import { useAppCtx } from './useAppCtx'
 
-function TopNav() {
-  const { selectedGroupId, setSelectedGroupId, selectedLeagueId, setSelectedLeagueId } = useAppCtx()
+function TopNav({ module }: { module: GameModule }) {
+  const gameKey = module.key
+  const { selectedGameKey, setSelectedGameKey, selectedGroupId, setSelectedGroupId, selectedLeagueId, setSelectedLeagueId } = useAppCtx()
+  const nav = useNavigate()
 
   const [groups, setGroups] = useState<Group[]>([])
   const [leagues, setLeagues] = useState<League[]>([])
@@ -26,12 +31,20 @@ function TopNav() {
   const [creatingLeague, setCreatingLeague] = useState(false)
   const [leagueError, setLeagueError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (selectedGameKey !== gameKey) {
+      setSelectedGameKey(gameKey)
+      setSelectedGroupId(null)
+      setSelectedLeagueId(null)
+    }
+  }, [gameKey, selectedGameKey, setSelectedGameKey, setSelectedGroupId, setSelectedLeagueId])
+
   const loadLeagues = useCallback(
     async (groupId: number) => {
       setLoadingLeagues(true)
       setLeagueError(null)
       try {
-        const data = await listGroupLeagues(groupId)
+        const data = await listGroupLeagues(gameKey, groupId)
         const nextLeagues = data ?? []
         setLeagues(nextLeagues)
 
@@ -42,12 +55,12 @@ function TopNav() {
       } catch {
         setLeagues([])
         setSelectedLeagueId(null)
-        setLeagueError('Nie udalo sie pobrac lig dla tej grupy.')
+        setLeagueError('Failed to fetch leagues for this group.')
       } finally {
         setLoadingLeagues(false)
       }
     },
-    [selectedLeagueId, setSelectedLeagueId],
+    [gameKey, selectedLeagueId, setSelectedLeagueId],
   )
 
   useEffect(() => {
@@ -55,7 +68,7 @@ function TopNav() {
     ;(async () => {
       setLoadingGroups(true)
       try {
-        const data = await listGroups()
+        const data = await listGroups(gameKey)
         if (cancelled) return
         setGroups(data ?? [])
       } finally {
@@ -66,7 +79,7 @@ function TopNav() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [gameKey])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -159,13 +172,13 @@ function TopNav() {
     setCreatingLeague(true)
     setLeagueError(null)
     try {
-      const created = await createGroupLeague(selectedGroupId, newLeagueName.trim())
+      const created = await createGroupLeague(gameKey, selectedGroupId, newLeagueName.trim())
       setNewLeagueName('')
       setShowLeagueCreate(false)
       await loadLeagues(selectedGroupId)
       setSelectedLeagueId(created.id)
     } catch {
-      setLeagueError('Nie udalo sie utworzyc ligi.')
+      setLeagueError('Failed to create league.')
     } finally {
       setCreatingLeague(false)
     }
@@ -174,17 +187,36 @@ function TopNav() {
   return (
     <div style={barWrap}>
       <nav style={bar}>
-        <NavLink to="/" style={linkStyle}>
+        <NavLink to={gameHomePath(gameKey)} style={linkStyle} end>
           Home
         </NavLink>
-        <NavLink to="/players" style={linkStyle}>
+        <NavLink to={gamePlayersPath(gameKey)} style={linkStyle}>
           Players
         </NavLink>
-        <NavLink to="/groups" style={linkStyle}>
+        <NavLink to={gameGroupsPath(gameKey)} style={linkStyle}>
           Groups
         </NavLink>
 
         <div style={contextWrap}>
+          <select
+            style={selectStyle}
+            value={gameKey}
+            onChange={(e) => {
+              const nextModule = GAME_MODULES.find((game) => game.key === e.target.value)
+              if (!nextModule) return
+              setSelectedGameKey(nextModule.key)
+              setSelectedGroupId(null)
+              setSelectedLeagueId(null)
+              nav(gameHomePath(nextModule.key))
+            }}
+          >
+            {GAME_MODULES.map((game) => (
+              <option key={game.key} value={game.key}>
+                {game.name}
+              </option>
+            ))}
+          </select>
+
           <select
             style={selectStyle}
             value={selectedGroupId ?? ''}
@@ -197,7 +229,7 @@ function TopNav() {
             }}
             disabled={loadingGroups || groups.length === 0}
           >
-            <option value="">{loadingGroups ? 'Ladowanie grup...' : 'Wybierz grupe'}</option>
+            <option value="">{loadingGroups ? 'Loading groups...' : 'Select group'}</option>
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
                 {group.name}
@@ -212,7 +244,7 @@ function TopNav() {
             disabled={!selectedGroupId || loadingLeagues || leagues.length === 0}
           >
             <option value="">
-              {!selectedGroupId ? 'Najpierw wybierz grupe' : loadingLeagues ? 'Ladowanie lig...' : 'Brak lig'}
+              {!selectedGroupId ? 'Select group first' : loadingLeagues ? 'Loading leagues...' : 'No leagues'}
             </option>
             {leagues.map((league) => (
               <option key={league.id} value={league.id}>
@@ -221,8 +253,8 @@ function TopNav() {
             ))}
           </select>
 
-          <Link to={selectedLeagueId ? `/leagues/${selectedLeagueId}` : '#'} style={openLeagueLinkStyle}>
-            Otwórz Ligę
+          <Link to={selectedLeagueId ? gameLeaguePath(gameKey, selectedLeagueId) : '#'} style={openLeagueLinkStyle}>
+            Open League
           </Link>
 
           {!showLeagueCreate ? (
@@ -232,14 +264,14 @@ function TopNav() {
               disabled={!selectedGroupId}
               style={minorButton(!selectedGroupId)}
             >
-              + Liga
+              + League
             </button>
           ) : (
             <>
               <input
                 value={newLeagueName}
                 onChange={(e) => setNewLeagueName(e.target.value)}
-                placeholder="Nazwa ligi..."
+                placeholder="League name..."
                 style={{
                   ...selectStyle,
                   minWidth: 180,
@@ -257,7 +289,7 @@ function TopNav() {
                 disabled={creatingLeague || !newLeagueName.trim()}
                 style={minorButton(creatingLeague || !newLeagueName.trim())}
               >
-                {creatingLeague ? 'Tworze...' : 'Utworz'}
+                {creatingLeague ? 'Creating...' : 'Create'}
               </button>
               <button
                 type="button"
@@ -269,7 +301,7 @@ function TopNav() {
                 disabled={creatingLeague}
                 style={minorButton(creatingLeague)}
               >
-                Anuluj
+                Cancel
               </button>
             </>
           )}
@@ -292,19 +324,64 @@ function TopNav() {
   )
 }
 
-export default function App() {
+function GameRoutes({ module }: { module: GameModule }) {
+  const LeaguePage = module.LeaguePage
+  const MatchPage = module.MatchPage
+
+  return (
+    <Routes>
+      <Route index element={<HomePage gameKey={module.key} />} />
+      <Route path="players" element={<PlayersPage gameKey={module.key} />} />
+      <Route path="groups" element={<GroupsPage gameKey={module.key} />} />
+      <Route path="groups/:groupId" element={<GroupDetailsPage gameKey={module.key} />} />
+      <Route path="leagues/:leagueId" element={<LeaguePage gameKey={module.key} />} />
+      <Route path="matches/:matchId" element={<MatchPage gameKey={module.key} />} />
+      <Route path="*" element={<Navigate to={gameHomePath(module.key)} replace />} />
+    </Routes>
+  )
+}
+
+function GameLayout() {
+  const { gameKey: routeGameKey } = useParams()
+  const fallback = resolveGameModule(DEFAULT_GAME_KEY)
+  const module = resolveGameModule(routeGameKey) ?? fallback
+
+  useEffect(() => {
+    if (module) applyGameTheme(module.themeTokens)
+  }, [module])
+
+  if (!module) {
+    return <Navigate to="/" replace />
+  }
+
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif' }}>
-      <TopNav />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/players" element={<PlayersPage />} />
-        <Route path="/groups" element={<GroupsPage />} />
-        <Route path="/groups/:groupId" element={<GroupDetailsPage />} />
-        <Route path="/leagues/:leagueId" element={<LeaguePage />} />
-        <Route path="/matches/:matchId" element={<MatchPage />} />
-        <Route path="*" element={<HomePage />} />
-      </Routes>
+      <TopNav module={module} />
+      <GameRoutes module={module} />
     </div>
+  )
+}
+
+function LegacyGameLayoutRedirect() {
+  const { gameKey } = useParams()
+  const module = resolveGameModule(gameKey) ?? resolveGameModule(DEFAULT_GAME_KEY)
+  return <Navigate to={gameHomePath(module?.key ?? DEFAULT_GAME_KEY)} replace />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<GameSelectPage />} />
+      <Route path="/select-game" element={<GameSelectPage />} />
+      <Route path="/:gameKey/*" element={<GameLayout />} />
+
+      <Route path="/g/:gameKey/*" element={<LegacyGameLayoutRedirect />} />
+      <Route path="/players" element={<Navigate to={gamePlayersPath(DEFAULT_GAME_KEY)} replace />} />
+      <Route path="/groups" element={<Navigate to={gameGroupsPath(DEFAULT_GAME_KEY)} replace />} />
+      <Route path="/groups/:groupId" element={<Navigate to={gameGroupsPath(DEFAULT_GAME_KEY)} replace />} />
+      <Route path="/leagues/:leagueId" element={<Navigate to={gameHomePath(DEFAULT_GAME_KEY)} replace />} />
+      <Route path="/matches/:matchId" element={<Navigate to={gameHomePath(DEFAULT_GAME_KEY)} replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }

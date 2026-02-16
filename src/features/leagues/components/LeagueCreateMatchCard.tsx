@@ -1,4 +1,5 @@
-﻿import type { Player } from '../../../types'
+﻿import type { LeaguePageConfig } from '../../../core/games/types'
+import type { Player } from '../../../types'
 import type { LeaguePageUi } from '../leaguePageUi'
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
   landmarksEnabled: boolean
   raceDraftEnabled: boolean
   loading: boolean
+  leagueConfig: LeaguePageConfig
   onTimerChange: (next: number) => void
   onRankedChange: (next: boolean) => void
   onLandmarksEnabledChange: (next: boolean) => void
@@ -26,6 +28,7 @@ export default function LeagueCreateMatchCard({
   landmarksEnabled,
   raceDraftEnabled,
   loading,
+  leagueConfig,
   onTimerChange,
   onRankedChange,
   onLandmarksEnabledChange,
@@ -76,13 +79,6 @@ export default function LeagueCreateMatchCard({
             onClick={() => onRankedChange(true)}
             disabled={loading}
             style={{ ...ui.segBtn(ranked), opacity: loading ? 0.6 : 1 }}
-            onMouseEnter={(e) => {
-              if (loading) return
-              e.currentTarget.style.transform = 'translateY(-1px)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
           >
             RANKED
           </button>
@@ -91,52 +87,42 @@ export default function LeagueCreateMatchCard({
             onClick={() => onRankedChange(false)}
             disabled={loading}
             style={{ ...ui.segBtn(!ranked), opacity: loading ? 0.6 : 1 }}
-            onMouseEnter={(e) => {
-              if (loading) return
-              e.currentTarget.style.transform = 'translateY(-1px)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
           >
             CASUAL
           </button>
         </div>
 
-        <label style={ui.switch} title="Enable Landmarks setup flow">
-          <input
-            type="checkbox"
-            checked={landmarksEnabled}
-            onChange={(e) => onLandmarksEnabledChange(e.target.checked)}
-            disabled={loading}
-            style={ui.checkbox}
-          />
-          <span style={{ fontWeight: 900 }}>Landmarks</span>
-        </label>
+        {leagueConfig.supportsLandmarks ? (
+          <label style={ui.switch} title="Enable Landmarks setup flow">
+            <input
+              type="checkbox"
+              checked={landmarksEnabled}
+              onChange={(e) => onLandmarksEnabledChange(e.target.checked)}
+              disabled={loading}
+              style={ui.checkbox}
+            />
+            <span style={{ fontWeight: 900 }}>Landmarks</span>
+          </label>
+        ) : null}
 
-        <label style={ui.switch}>
-          <input
-            type="checkbox"
-            checked={raceDraftEnabled}
-            onChange={(e) => onRaceDraftEnabledChange(e.target.checked)}
-            disabled={loading}
-            style={ui.checkbox}
-          />
-          <span style={{ fontWeight: 900 }}>Draft</span>
-        </label>
+        {leagueConfig.supportsRaceDraft ? (
+          <label style={ui.switch}>
+            <input
+              type="checkbox"
+              checked={raceDraftEnabled}
+              onChange={(e) => onRaceDraftEnabledChange(e.target.checked)}
+              disabled={loading}
+              style={ui.checkbox}
+            />
+            <span style={{ fontWeight: 900 }}>Draft</span>
+          </label>
+        ) : null}
 
         <button
           onClick={onCreateMatch}
           disabled={loading || selected.length < 2}
           title={selected.length < 2 ? 'Select at least 2 players' : undefined}
           style={ui.createBtn(!loading && selected.length >= 2)}
-          onMouseEnter={(e) => {
-            if (loading || selected.length < 2) return
-            e.currentTarget.style.transform = 'translateY(-1px)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)'
-          }}
         >
           Create match
         </button>
@@ -153,17 +139,7 @@ export default function LeagueCreateMatchCard({
             .join('')
 
           return (
-            <label
-              key={p.id}
-              style={ui.playerCard(isSelected)}
-              onMouseEnter={(e) => {
-                if (loading) return
-                e.currentTarget.style.transform = 'translateY(-1px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
+            <label key={p.id} style={ui.playerCard(isSelected)}>
               <input
                 type="checkbox"
                 checked={isSelected}

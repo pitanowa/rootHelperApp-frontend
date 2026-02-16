@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { apiPost } from '../../../api'
+import { gameApiPost } from '../../../api'
 import type { DraftState, MatchPlayerState, MatchState } from '../types'
 import {
   LS_MANUAL_ORDER,
@@ -15,6 +15,7 @@ import {
 import { getErrorMessage } from '../matchPageUi'
 
 export type UseMatchPageFlowParams = {
+  gameKey: string
   mid: number
   state: MatchState | null
   setState: Dispatch<SetStateAction<MatchState | null>>
@@ -31,6 +32,7 @@ type LandmarksStateResponse = {
 }
 
 export function useMatchPageFlow({
+  gameKey,
   mid,
   state,
   setState,
@@ -111,13 +113,13 @@ export function useMatchPageFlow({
 
     void (async () => {
       try {
-        await apiPost<void>(`/api/matches/${mid}/start`)
+        await gameApiPost<void>(gameKey, `/matches/${mid}/start`)
         await load()
       } catch (e: unknown) {
         setError(getErrorMessage(e, 'Failed to start match'))
       }
     })()
-  }, [load, mid, setError, state])
+  }, [gameKey, load, mid, setError, state])
 
   const needsRacePick =
     !!state &&
@@ -133,42 +135,42 @@ export function useMatchPageFlow({
 
   const onDraftLandmarksBan = useCallback(
     async (banned: string, randomCount: 1 | 2) => {
-      await apiPost(`/api/matches/${mid}/landmarks/ban`, { banned, randomCount })
+      await gameApiPost(gameKey, `/matches/${mid}/landmarks/ban`, { banned, randomCount })
       await load()
     },
-    [load, mid],
+    [gameKey, load, mid],
   )
 
   const onDraftPick = useCallback(
     async (playerId: number, race: string) => {
       try {
-        await apiPost(`/api/matches/${mid}/draft/pick`, { playerId, race })
+        await gameApiPost(gameKey, `/matches/${mid}/draft/pick`, { playerId, race })
         await load()
       } catch (e: unknown) {
         setError(getErrorMessage(e, 'Failed to pick race'))
       }
     },
-    [load, mid, setError],
+    [gameKey, load, mid, setError],
   )
 
   const onDraftSetBans = useCallback(
     async (bannedRaces: string[]) => {
       try {
-        await apiPost(`/api/matches/${mid}/draft/bans`, { bannedRaces })
+        await gameApiPost(gameKey, `/matches/${mid}/draft/bans`, { bannedRaces })
         await load()
       } catch (e: unknown) {
         setError(getErrorMessage(e, 'Failed to set bans'))
       }
     },
-    [load, mid, setError],
+    [gameKey, load, mid, setError],
   )
 
-  const onDraftResetPick = useCallback(() => apiPost(`/api/matches/${mid}/draft/reset-pick`), [mid])
+  const onDraftResetPick = useCallback(() => gameApiPost(gameKey, `/matches/${mid}/draft/reset-pick`), [gameKey, mid])
 
   const onSetLandmarksManual = useCallback(
     async (picked: string[]) => {
       try {
-        const resp = await apiPost<LandmarksStateResponse>(`/api/matches/${mid}/landmarks/manual`, { picked })
+        const resp = await gameApiPost<LandmarksStateResponse>(gameKey, `/matches/${mid}/landmarks/manual`, { picked })
 
         setState((prev) => {
           if (!prev) return prev
@@ -185,7 +187,7 @@ export function useMatchPageFlow({
         setError(getErrorMessage(e, 'Failed to set landmarks'))
       }
     },
-    [load, mid, setError, setState],
+    [gameKey, load, mid, setError, setState],
   )
 
   const onManualPick = useCallback(
@@ -207,7 +209,7 @@ export function useMatchPageFlow({
         }
 
         lsSetRace(mid, playerId, race)
-        await apiPost(`/api/matches/${mid}/race-pick`, { playerId, race })
+        await gameApiPost(gameKey, `/matches/${mid}/race-pick`, { playerId, race })
 
         const allPickedNow = (state?.players ?? []).every((p) =>
           p.playerId === playerId ? true : !!(p.race || lsGetRaceMap(mid)[p.playerId]),
@@ -223,7 +225,7 @@ export function useMatchPageFlow({
         setError(getErrorMessage(e, 'Failed to pick race'))
       }
     },
-    [load, mid, setError, setState, state],
+    [gameKey, load, mid, setError, setState, state],
   )
 
   const onManualReset = useCallback(async () => {
@@ -238,12 +240,12 @@ export function useMatchPageFlow({
         }
       })
 
-      await apiPost(`/api/matches/${mid}/race-pick/reset`)
+      await gameApiPost(gameKey, `/matches/${mid}/race-pick/reset`)
       await load()
     } catch (e: unknown) {
       setError(getErrorMessage(e, 'Failed to reset race picks'))
     }
-  }, [load, mid, setError, setState])
+  }, [gameKey, load, mid, setError, setState])
 
   return {
     flowStage,
@@ -263,5 +265,3 @@ export function useMatchPageFlow({
     onManualReset,
   }
 }
-
-

@@ -3,7 +3,7 @@ import type { Player } from '../../../types'
 import { createPlayer, deletePlayer, listPlayers } from '../api'
 import { toErrorMessage } from '../../../shared/errors'
 
-export function usePlayersPageController() {
+export function usePlayersPageController(gameKey: string) {
   const [players, setPlayers] = useState<Player[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,14 +15,14 @@ export function usePlayersPageController() {
     setLoading(true)
     setError(null)
     try {
-      const data = await listPlayers()
+      const data = await listPlayers(gameKey)
       setPlayers(data)
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to load players'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [gameKey])
 
   useEffect(() => {
     void loadPlayers()
@@ -35,7 +35,7 @@ export function usePlayersPageController() {
     setLoading(true)
     setError(null)
     try {
-      const created = await createPlayer(trimmed)
+      const created = await createPlayer(gameKey, trimmed)
       setPlayers((prev) => [...prev, created])
       setName('')
     } catch (e: unknown) {
@@ -43,14 +43,14 @@ export function usePlayersPageController() {
     } finally {
       setLoading(false)
     }
-  }, [name])
+  }, [gameKey, name])
 
   const removePlayer = useCallback(async (id: number) => {
     setLoading(true)
     setError(null)
 
     try {
-      await deletePlayer(id)
+      await deletePlayer(gameKey, id)
     } catch (e: unknown) {
       const msg = toErrorMessage(e, 'Failed to remove player')
       const notFound = msg.includes('404')
@@ -63,7 +63,7 @@ export function usePlayersPageController() {
 
     setPlayers((prev) => prev.filter((p) => p.id !== id))
     setLoading(false)
-  }, [])
+  }, [gameKey])
 
   return {
     sortedPlayers,

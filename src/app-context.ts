@@ -1,11 +1,12 @@
-import { createContext } from 'react'
+﻿import { createContext } from 'react'
 
 export type AppCtx = {
+  selectedGameKey: string
+  setSelectedGameKey: (value: string) => void
   selectedGroupId: number | null
-  setSelectedGroupId: (v: number | null) => void
+  setSelectedGroupId: (value: number | null) => void
   selectedLeagueId: number | null
-  setSelectedLeagueId: (v: number | null) => void
+  setSelectedLeagueId: (value: number | null) => void
 }
 
 export const Ctx = createContext<AppCtx | null>(null)
-

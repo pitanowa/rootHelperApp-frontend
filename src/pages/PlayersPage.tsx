@@ -3,7 +3,11 @@ import PlayersList from '../features/players/components/PlayersList'
 import { usePlayersPageController } from '../features/players/hooks/usePlayersPageController'
 import { playersPageUi } from '../features/players/playersPageUi'
 
-export default function PlayersPage() {
+type Props = {
+  gameKey: string
+}
+
+export default function PlayersPage({ gameKey }: Props) {
   const {
     sortedPlayers,
     name,
@@ -13,7 +17,7 @@ export default function PlayersPage() {
     loadPlayers,
     addPlayer,
     removePlayer,
-  } = usePlayersPageController()
+  } = usePlayersPageController(gameKey)
 
   return (
     <div style={playersPageUi.page}>

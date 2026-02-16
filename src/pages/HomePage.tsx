@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+﻿import { useCallback } from 'react'
 import HomeHero from '../features/home/components/HomeHero'
 import HomeMatchesCard from '../features/home/components/HomeMatchesCard'
 import HomePlayersCard from '../features/home/components/HomePlayersCard'
@@ -8,7 +8,11 @@ import type { ActiveMatch } from '../features/matches/types'
 import { useAppCtx } from '../useAppCtx'
 import '../features/home/homePage.css'
 
-export default function HomePage() {
+type Props = {
+  gameKey: string
+}
+
+export default function HomePage({ gameKey }: Props) {
   const { setSelectedGroupId, setSelectedLeagueId } = useAppCtx()
   const {
     players,
@@ -24,7 +28,7 @@ export default function HomePage() {
     loadingStandings,
     standingsError,
     load,
-  } = useHomePageController()
+  } = useHomePageController(gameKey)
 
   const handleOpenMatch = useCallback(
     (match: ActiveMatch) => {
@@ -36,12 +40,13 @@ export default function HomePage() {
 
   return (
     <main className="home-page">
-      <HomeHero playersCount={players.length} activeMatchesCount={activeMatches.length} onRefresh={load} />
+      <HomeHero gameKey={gameKey} playersCount={players.length} activeMatchesCount={activeMatches.length} onRefresh={load} />
 
       <section className="home-grid">
         <HomePlayersCard players={players} loading={loadingPlayers} error={playersError} />
 
         <HomeStandingsCard
+          gameKey={gameKey}
           standings={standings}
           standingsLeagueId={standingsLeagueId}
           loading={loadingStandings}
@@ -49,6 +54,7 @@ export default function HomePage() {
         />
 
         <HomeMatchesCard
+          gameKey={gameKey}
           activeMatches={activeMatches}
           loading={loadingActive}
           error={activeError}

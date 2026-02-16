@@ -1,13 +1,15 @@
-import { Link } from 'react-router-dom'
+﻿import { Link } from 'react-router-dom'
 import { homeHeroPills, homeSetupSteps } from '../homePageUi'
+import { gameGroupsPath, gamePlayersPath } from '../../../routing/paths'
 
 type HomeHeroProps = {
+  gameKey: string
   playersCount: number
   activeMatchesCount: number
   onRefresh: () => void
 }
 
-export default function HomeHero({ playersCount, activeMatchesCount, onRefresh }: HomeHeroProps) {
+export default function HomeHero({ gameKey, playersCount, activeMatchesCount, onRefresh }: HomeHeroProps) {
   return (
     <section className="home-hero home-fade-up">
       <div className="home-hero__aurora" />
@@ -22,43 +24,43 @@ export default function HomeHero({ playersCount, activeMatchesCount, onRefresh }
         </div>
 
         <h1 className="home-hero__title">
-          Dowództwo rozgrywek <span>Root</span>
+          League command center for <span>{gameKey.toUpperCase()}</span>
         </h1>
         <p className="home-hero__description">
-          Jedno miejsce do zarządzania graczami, grupami i meczami. Twórz ligi, prowadź draft i kontroluj aktywne stoły
-          bez przełączania między notatkami.
+          Manage players, groups, leagues, and live matches from one place. Start a game-specific flow without
+          switching tools.
         </p>
 
         <div className="home-hero__actions">
-          <Link to="/players" className="home-cta home-cta--primary">
-            Zbuduj roster graczy
+          <Link to={gamePlayersPath(gameKey)} className="home-cta home-cta--primary">
+            Build player roster
           </Link>
-          <Link to="/groups" className="home-cta home-cta--ghost">
-            Zarządzaj grupami
+          <Link to={gameGroupsPath(gameKey)} className="home-cta home-cta--ghost">
+            Manage groups
           </Link>
           <button type="button" onClick={onRefresh} className="home-cta home-cta--soft">
-            Odśwież centrum
+            Refresh dashboard
           </button>
         </div>
 
         <div className="home-hero__metrics">
           <div className="home-metric">
             <strong>{playersCount}</strong>
-            <span>Graczy</span>
+            <span>Players</span>
           </div>
           <div className="home-metric">
             <strong>{activeMatchesCount}</strong>
-            <span>Aktywnych meczów</span>
+            <span>Active matches</span>
           </div>
           <div className="home-metric">
             <strong>Live</strong>
-            <span>Status ligi</span>
+            <span>League status</span>
           </div>
         </div>
       </div>
 
       <aside className="home-hero__right">
-        <h2>Sekwencja startowa</h2>
+        <h2>Startup sequence</h2>
         <div className="home-steps">
           {homeSetupSteps.map((step) => (
             <article key={step.title} className="home-step">

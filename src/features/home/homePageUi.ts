@@ -1,31 +1,31 @@
-export const homeHeroPills = [
-  'ROOT League Control',
+﻿export const homeHeroPills = [
+  'League Control',
   'Matchmaking',
-  'Draft ras i landmarków',
-  'Ranked i casual',
+  'Race and Landmark Draft',
+  'Ranked and Casual',
 ]
 
 export const homeSetupSteps = [
   {
-    title: '1. Zbuduj skład',
-    description: 'Dodaj graczy, aby przygotować bazę pod ligi i mecze.',
+    title: '1. Build roster',
+    description: 'Add players to prepare your core league pool.',
   },
   {
-    title: '2. Utwórz grupy',
-    description: 'Organizuj ludzi w grupy i przypisuj do nich ligi.',
+    title: '2. Create groups',
+    description: 'Organize players into groups and assign leagues.',
   },
   {
-    title: '3. Uruchom mecz',
-    description: 'Przejdź do aktywnego meczu i prowadź draft oraz timer bez chaosu.',
+    title: '3. Start match',
+    description: 'Open an active match and run draft and timer in one place.',
   },
 ]
 
 export function getLeagueLabel(leagueName: string | undefined) {
-  return leagueName ?? 'Nieznana liga'
+  return leagueName ?? 'Unknown league'
 }
 
 export function getGroupLabel(groupName: string | undefined) {
-  return groupName ?? 'Brak grupy'
+  return groupName ?? 'No group'
 }
 
 export function getRankBadge(rank: number) {

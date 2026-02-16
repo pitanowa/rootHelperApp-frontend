@@ -11,11 +11,12 @@ import {
 import { toErrorMessage } from '../../../shared/errors'
 
 type Params = {
+  gameKey: string
   groupId: number
   onSelectedGroupIdChange: (groupId: number | null) => void
 }
 
-export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: Params) {
+export function useGroupDetailsController({ gameKey, groupId, onSelectedGroupIdChange }: Params) {
   const [group, setGroup] = useState<GroupDetails | null>(null)
   const [allPlayers, setAllPlayers] = useState<Player[]>([])
   const [leagues, setLeagues] = useState<League[]>([])
@@ -43,9 +44,9 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     setError(null)
     try {
       const [g, players, ls] = await Promise.all([
-        getGroupDetails(groupId),
-        listPlayersForGroups(),
-        listGroupLeagues(groupId),
+        getGroupDetails(gameKey, groupId),
+        listPlayersForGroups(gameKey),
+        listGroupLeagues(gameKey, groupId),
       ])
       setGroup(g)
       setAllPlayers(players)
@@ -55,7 +56,7 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     } finally {
       setLoading(false)
     }
-  }, [groupId])
+  }, [gameKey, groupId])
 
   useEffect(() => {
     if (!Number.isFinite(groupId)) return
@@ -67,7 +68,7 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     setLoading(true)
     setError(null)
     try {
-      await addGroupMember(groupId, selectedPlayerId)
+      await addGroupMember(gameKey, groupId, selectedPlayerId)
       await loadAll()
       setSelectedPlayerId('')
     } catch (e: unknown) {
@@ -75,20 +76,20 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     } finally {
       setLoading(false)
     }
-  }, [groupId, loadAll, selectedPlayerId])
+  }, [gameKey, groupId, loadAll, selectedPlayerId])
 
   const removeMember = useCallback(async (playerId: number) => {
     setLoading(true)
     setError(null)
     try {
-      await removeGroupMember(groupId, playerId)
+      await removeGroupMember(gameKey, groupId, playerId)
       await loadAll()
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to remove member'))
     } finally {
       setLoading(false)
     }
-  }, [groupId, loadAll])
+  }, [gameKey, groupId, loadAll])
 
   const createLeague = useCallback(async () => {
     const trimmed = newLeagueName.trim()
@@ -97,7 +98,7 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     setLoading(true)
     setError(null)
     try {
-      await createGroupLeague(groupId, trimmed)
+      await createGroupLeague(gameKey, groupId, trimmed)
       setNewLeagueName('')
       await loadAll()
     } catch (e: unknown) {
@@ -105,7 +106,7 @@ export function useGroupDetailsController({ groupId, onSelectedGroupIdChange }: 
     } finally {
       setLoading(false)
     }
-  }, [groupId, loadAll, newLeagueName])
+  }, [gameKey, groupId, loadAll, newLeagueName])
 
   return {
     group,

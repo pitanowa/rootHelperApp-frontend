@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { gameMatchPath } from '../../../routing/paths'
 import type { LeaguePageUi } from '../leaguePageUi'
 import type { MatchListItem } from '../types'
 
 type Props = {
+  gameKey: string
   matches: MatchListItem[]
   loading: boolean
   summaryLoading: boolean
@@ -15,6 +17,7 @@ type Props = {
 }
 
 export default function LeagueHistoryCard({
+  gameKey,
   matches,
   loading,
   summaryLoading,
@@ -114,7 +117,7 @@ export default function LeagueHistoryCard({
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {m.status !== 'FINISHED' && (
                       <Link
-                        to={`/matches/${m.id}`}
+                        to={gameMatchPath(gameKey, m.id)}
                         style={ui.linkBtn('open', disabled)}
                         onClick={(e) => {
                           if (disabled) e.preventDefault()
