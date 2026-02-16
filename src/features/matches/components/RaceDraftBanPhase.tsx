@@ -66,6 +66,9 @@ export default function RaceDraftBanPhase({
   bansValid,
 }: Props) {
   if (draft.phase !== 'BAN') return null
+  const landmarksLocked = !!(landmarksBanned && (landmarksDrawn?.length ?? 0) > 0)
+  const banSelectionBlocked = !!landmarksEnabled && !landmarksLocked
+  const landmarkControlsDisabled = loading || draft.status !== 'DRAFTING' || landmarksLocked
 
   return (
     <div style={ui.card}>
@@ -80,18 +83,108 @@ export default function RaceDraftBanPhase({
         <div style={ui.rightBadges}>
           <RaceDraftBadge variant="ghost" text={`Bans: ${bansCount}/${maxBans}`} />
           <RaceDraftBadge variant="ghost" text={`Left: ${bansLeft}`} />
-          <button onClick={clearBans} disabled={loading || draft.status !== 'DRAFTING'} style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}>
+          <button onClick={clearBans} disabled={loading || draft.status !== 'DRAFTING' || banSelectionBlocked} style={ui.btn('ghost', loading || draft.status !== 'DRAFTING' || banSelectionBlocked)}>
             🧹 Clear
           </button>
         </div>
       </div>
+
+      {landmarksEnabled && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(173,55,69,0.28)' }}>
+          <div style={ui.cardHeader}>
+            <div>
+              <h2 style={ui.h2}>Landmarks</h2>
+              <div style={ui.sub}>Select 1 landmark to exclude from random draw, then choose how many to draw.</div>
+            </div>
+
+            <div style={ui.rightBadges}>
+              {landmarksBanned && landmarksDrawn?.length ? (
+                <RaceDraftBadge variant="ok" text={`Locked: ${landmarksBanned} • draw ${landmarksDrawn.length}`} />
+              ) : (
+                <RaceDraftBadge variant="ghost" text="Not set" />
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+            {LANDMARKS.map((lm) => {
+              const picked = localLandmarkBanned === lm.id
+              const disabled = landmarkControlsDisabled
+
+              return (
+                <Tooltip key={lm.id} placement="top" content={lmTooltipContent(lm.id as LandmarkId)} disabled={disabled}>
+                  <button
+                    disabled={disabled}
+                    onClick={() => setLocalLandmarkBanned(lm.id)}
+                    style={{
+                      ...ui.raceTile(picked ? 'banned' : 'neutral', disabled),
+                      color: '#fbeff1',
+                      width: '100%',
+                      minHeight: 52,
+                      justifyContent: 'flex-start',
+                      padding: '10px 12px',
+                    }}
+                  >
+                    <span style={{ flexShrink: 0 }}>{picked ? '🚫' : '🏷️'}</span>
+                    <span
+                      style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'left',
+                        fontWeight: 900,
+                      }}
+                    >
+                      {lmLabel(lm.id as LandmarkId)}
+                    </span>
+                  </button>
+                </Tooltip>
+              )
+            })}
+          </div>
+
+          <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={ui.sub}>Random draw:</span>
+
+            <button disabled={landmarkControlsDisabled} onClick={() => setLocalLandmarkRandomCount(1)} style={ui.btn('ghost', landmarkControlsDisabled)}>
+              {localLandmarkRandomCount === 1 ? '✅ ' : ''}1 landmark
+            </button>
+
+            <button disabled={landmarkControlsDisabled} onClick={() => setLocalLandmarkRandomCount(2)} style={ui.btn('ghost', landmarkControlsDisabled)}>
+              {localLandmarkRandomCount === 2 ? '✅ ' : ''}2 landmarks
+            </button>
+
+            <div style={{ marginLeft: 'auto' }}>
+              <button
+                onClick={async () => {
+                  if (!onLandmarksBan || !localLandmarkBanned) return
+                  await onLandmarksBan(localLandmarkBanned, localLandmarkRandomCount)
+                  onRefresh?.()
+                }}
+                disabled={loading || draft.status !== 'DRAFTING' || !onLandmarksBan || !localLandmarkBanned || !!(landmarksBanned && (landmarksDrawn?.length ?? 0) > 0)}
+                style={ui.btn('gold', loading || draft.status !== 'DRAFTING' || !onLandmarksBan || !localLandmarkBanned || landmarksLocked)}
+              >
+                🏷️ Confirm landmarks
+              </button>
+            </div>
+          </div>
+
+          {localLandmarkBanned ? (
+            <div style={ui.hint}>
+              Banned: <b>{localLandmarkBanned}</b> • Will randomly draw <b>{localLandmarkRandomCount}</b> from remaining.
+            </div>
+          ) : (
+            <div style={ui.hint}>Pick exactly one landmark above to exclude it from the draw.</div>
+          )}
+        </div>
+      )}
 
       <div style={ui.tileGrid}>
         {ALL_RACES.map((race) => {
           const isVaga = race === VAGABOND
           const isBanned = isVaga ? vagabondBanCount > 0 : nonVagabondBans.has(race)
           const disabledAdd = !isBanned && !canAddMoreBans
-          const disabled = loading || draft.status !== 'DRAFTING' || disabledAdd
+          const disabled = loading || draft.status !== 'DRAFTING' || disabledAdd || banSelectionBlocked
 
           return (
             <button
@@ -121,9 +214,9 @@ export default function RaceDraftBanPhase({
         {canBanSecondVagabond && (
           <button
             onClick={addSecondVagabondBan}
-            disabled={loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2}
+            disabled={loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2 || banSelectionBlocked}
             style={{
-              ...ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2),
+              ...ui.raceTile('neutral', loading || draft.status !== 'DRAFTING' || !canAddMoreBans || vagabondBanCount >= 2 || banSelectionBlocked),
               color: '#fbeff1',
             }}
             title="Add second VAGABOND ban (ban 2 of 2 copies)"
@@ -143,75 +236,9 @@ export default function RaceDraftBanPhase({
         </div>
       )}
 
-      {landmarksEnabled && (
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(173,55,69,0.28)' }}>
-          <div style={ui.cardHeader}>
-            <div>
-              <h2 style={ui.h2}>Landmarks</h2>
-              <div style={ui.sub}>Select 1 landmark to exclude from random draw, then choose how many to draw.</div>
-            </div>
-
-            <div style={ui.rightBadges}>
-              {landmarksBanned && landmarksDrawn?.length ? (
-                <RaceDraftBadge variant="ok" text={`Locked: ${landmarksBanned} • draw ${landmarksDrawn.length}`} />
-              ) : (
-                <RaceDraftBadge variant="ghost" text="Not set" />
-              )}
-            </div>
-          </div>
-
-          <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-            {LANDMARKS.map((lm) => {
-              const picked = localLandmarkBanned === lm.id
-              const disabled = loading || draft.status !== 'DRAFTING'
-
-              return (
-                <Tooltip key={lm.id} placement="top" content={lmTooltipContent(lm.id as LandmarkId)} disabled={disabled}>
-                  <button
-                    disabled={disabled}
-                    onClick={() => setLocalLandmarkBanned(lm.id)}
-                    style={{ ...ui.raceTile(picked ? 'banned' : 'neutral', disabled), color: '#fbeff1' }}
-                  >
-                    {picked ? '🚫' : '🏷️'} {lmLabel(lm.id as LandmarkId)}
-                  </button>
-                </Tooltip>
-              )
-            })}
-          </div>
-
-          <div style={{ marginTop: 12, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={ui.sub}>Random draw:</span>
-
-            <button disabled={loading || draft.status !== 'DRAFTING'} onClick={() => setLocalLandmarkRandomCount(1)} style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}>
-              {localLandmarkRandomCount === 1 ? '✅ ' : ''}1 landmark
-            </button>
-
-            <button disabled={loading || draft.status !== 'DRAFTING'} onClick={() => setLocalLandmarkRandomCount(2)} style={ui.btn('ghost', loading || draft.status !== 'DRAFTING')}>
-              {localLandmarkRandomCount === 2 ? '✅ ' : ''}2 landmarks
-            </button>
-
-            <div style={{ marginLeft: 'auto' }}>
-              <button
-                onClick={async () => {
-                  if (!onLandmarksBan || !localLandmarkBanned) return
-                  await onLandmarksBan(localLandmarkBanned, localLandmarkRandomCount)
-                  onRefresh?.()
-                }}
-                disabled={loading || draft.status !== 'DRAFTING' || !onLandmarksBan || !localLandmarkBanned || !!(landmarksBanned && (landmarksDrawn?.length ?? 0) > 0)}
-                style={ui.btn('gold', loading || draft.status !== 'DRAFTING' || !onLandmarksBan || !localLandmarkBanned)}
-              >
-                🏷️ Confirm landmarks
-              </button>
-            </div>
-          </div>
-
-          {localLandmarkBanned ? (
-            <div style={ui.hint}>
-              Banned: <b>{localLandmarkBanned}</b> • Will randomly draw <b>{localLandmarkRandomCount}</b> from remaining.
-            </div>
-          ) : (
-            <div style={ui.hint}>Pick exactly one landmark above to exclude it from the draw.</div>
-          )}
+      {banSelectionBlocked && (
+        <div style={{ ...ui.hint, marginTop: 10 }}>
+          Confirm landmarks first to unlock race bans.
         </div>
       )}
 
@@ -220,8 +247,8 @@ export default function RaceDraftBanPhase({
 
         <button
           onClick={() => onSetBans?.(localBans)}
-          disabled={loading || draft.status !== 'DRAFTING' || !bansValid || !onSetBans}
-          style={ui.btn('danger', loading || draft.status !== 'DRAFTING' || !bansValid || !onSetBans)}
+          disabled={loading || draft.status !== 'DRAFTING' || !bansValid || !onSetBans || banSelectionBlocked}
+          style={ui.btn('danger', loading || draft.status !== 'DRAFTING' || !bansValid || !onSetBans || banSelectionBlocked)}
         >
           🩸 Confirm bans & start draft
         </button>

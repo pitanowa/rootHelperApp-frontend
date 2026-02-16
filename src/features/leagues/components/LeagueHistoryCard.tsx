@@ -87,9 +87,6 @@ export default function LeagueHistoryCard({
                     <span style={ui.modeChip(m.ranked)}>{m.ranked ? 'RANKED' : 'CASUAL'}</span>
                   </div>
 
-                  <div style={ui.chipRow}>
-                    <span style={ui.chip}>Timer: {m.timerSecondsInitial}s</span>
-                  </div>
                 </div>
 
                 <div style={{ ...ui.actions, alignItems: 'flex-start' }}>
@@ -113,21 +110,22 @@ export default function LeagueHistoryCard({
                       </Link>
                     )}
 
-                    <button
-                      onClick={() => onOpenSummary(m.id)}
-                      disabled={disabled || summaryLoading || m.status !== 'FINISHED'}
-                      title={m.status !== 'FINISHED' ? 'Summary available after FINISHED' : undefined}
-                      style={ui.linkBtn('ghost', disabled || summaryLoading || m.status !== 'FINISHED')}
-                      onMouseEnter={(e) => {
-                        if (disabled || summaryLoading || m.status !== 'FINISHED') return
-                        e.currentTarget.style.transform = 'translateY(-1px)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                      }}
-                    >
-                      Summary
-                    </button>
+                    {m.status === 'FINISHED' && (
+                      <button
+                        onClick={() => onOpenSummary(m.id)}
+                        disabled={disabled || summaryLoading}
+                        style={ui.linkBtn('ghost', disabled || summaryLoading)}
+                        onMouseEnter={(e) => {
+                          if (disabled || summaryLoading) return
+                          e.currentTarget.style.transform = 'translateY(-1px)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                        }}
+                      >
+                        Summary
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ position: 'relative' }}>
