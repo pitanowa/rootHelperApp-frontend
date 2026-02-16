@@ -83,10 +83,31 @@ export default function LeagueHistoryCard({
                 <div style={ui.matchLeft}>
                   <div style={ui.matchTopLine}>
                     <span style={ui.matchId}>{m.name && m.name.trim() ? m.name : `Match #${m.id}`}</span>
-                    <span style={ui.statusChip(m.status)}>{m.status === 'FINISHED' ? 'FINISHED' : m.status === 'DRAFT' ? 'DRAFT' : 'RUNNING'}</span>
-                    <span style={ui.modeChip(m.ranked)}>{m.ranked ? 'RANKED' : 'CASUAL'}</span>
                   </div>
 
+                  <div style={{ ...ui.chipRow, marginTop: 2 }}>
+                    <span
+                      style={{
+                        ...ui.statusChip(m.status),
+                        padding: '4px 8px',
+                        fontSize: 10,
+                        letterSpacing: 0.2,
+                      }}
+                    >
+                      {m.status === 'FINISHED' ? 'FINISHED' : m.status === 'DRAFT' ? 'DRAFT' : 'RUNNING'}
+                    </span>
+
+                    <span
+                      style={{
+                        ...ui.modeChip(m.ranked),
+                        padding: '4px 8px',
+                        fontSize: 10,
+                        letterSpacing: 0.2,
+                      }}
+                    >
+                      {m.ranked ? 'RANKED' : 'CASUAL'}
+                    </span>
+                  </div>
                 </div>
 
                 <div style={{ ...ui.actions, alignItems: 'flex-start' }}>
