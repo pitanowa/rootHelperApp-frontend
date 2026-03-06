@@ -80,9 +80,11 @@ export function useLeaguePageController({
     try {
       const s = await gameApiGet<MatchSummary>(gameKey, `/matches/${matchId}/summary`)
       setSummary(s)
+      return s
     } catch (e: unknown) {
       setError(toErrorMessage(e, 'Failed to load match summary'))
       setSummaryOpen(false)
+      return null
     } finally {
       setSummaryLoading(false)
     }
