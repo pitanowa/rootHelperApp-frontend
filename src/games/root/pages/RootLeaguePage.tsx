@@ -67,27 +67,33 @@ export default function RootLeaguePage({ gameKey, capabilities }: Props) {
   return (
     <div style={leaguePageUi.page}>
       <div style={leaguePageUi.backdrop}>
-        <LeaguePageHeader loading={loading} error={error} onRefresh={load} ui={leaguePageUi} />
+        <LeaguePageHeader
+          loading={loading}
+          error={error}
+          onRefresh={load}
+          ui={leaguePageUi}
+          actions={
+            <LeagueCreateMatchCard
+              players={players}
+              selected={selected}
+              timerSeconds={timerSeconds}
+              ranked={ranked}
+              leagueConfig={leagueConfig}
+              landmarksEnabled={landmarksEnabled}
+              raceDraftEnabled={raceDraftEnabled}
+              loading={loading}
+              onTimerChange={setTimerSeconds}
+              onRankedChange={setRanked}
+              onLandmarksEnabledChange={setLandmarksEnabled}
+              onRaceDraftEnabledChange={setRaceDraftEnabled}
+              onTogglePlayer={togglePlayer}
+              onCreateMatch={createMatch}
+              ui={leaguePageUi}
+            />
+          }
+        />
 
         <LeagueStandingsCard standings={standings} columns={getRootStandingsColumns()} ui={leaguePageUi} />
-
-        <LeagueCreateMatchCard
-          players={players}
-          selected={selected}
-          timerSeconds={timerSeconds}
-          ranked={ranked}
-          leagueConfig={leagueConfig}
-          landmarksEnabled={landmarksEnabled}
-          raceDraftEnabled={raceDraftEnabled}
-          loading={loading}
-          onTimerChange={setTimerSeconds}
-          onRankedChange={setRanked}
-          onLandmarksEnabledChange={setLandmarksEnabled}
-          onRaceDraftEnabledChange={setRaceDraftEnabled}
-          onTogglePlayer={togglePlayer}
-          onCreateMatch={createMatch}
-          ui={leaguePageUi}
-        />
 
         <LeagueHistoryCard
           gameKey={gameKey}

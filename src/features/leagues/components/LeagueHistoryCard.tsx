@@ -204,17 +204,21 @@ export default function LeagueHistoryCard({
                           Rename
                         </button>
 
-                        <button
-                          onClick={() => {
-                            void onDeleteMatch(m.id)
-                            setOpenActionsMatchId(null)
-                          }}
-                          disabled={disabled || m.ranked}
+                        <span
                           title={m.ranked ? 'Cannot delete RANKED match. Set it to CASUAL first.' : undefined}
-                          style={{ ...ui.linkBtn('danger', disabled || m.ranked), justifyContent: 'center' }}
+                          style={{ display: 'flex', width: '100%' }}
                         >
-                          Delete
-                        </button>
+                          <button
+                            onClick={() => {
+                              void onDeleteMatch(m.id)
+                              setOpenActionsMatchId(null)
+                            }}
+                            disabled={disabled || m.ranked}
+                            style={{ ...ui.linkBtn('danger', disabled || m.ranked), justifyContent: 'center', width: '100%' }}
+                          >
+                            Delete
+                          </button>
+                        </span>
                       </div>
                     ) : null}
                   </div>
